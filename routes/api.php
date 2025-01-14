@@ -9,6 +9,7 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\KondisiController;
+use App\Http\Controllers\PeminjamanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -79,6 +80,17 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         Route::post('store', [KondisiController::class, 'store']);
         Route::apiResource('kondisi', KondisiController::class)
             ->except(['index', 'store']);
+    });
+
+    Route::prefix('peminjaman')->group(function () {
+        Route::get('/get', [PeminjamanController::class, 'get']);
+        Route::post('', [PeminjamanController::class, 'index']);
+        Route::post('show', [PeminjamanController::class, 'show']);
+        Route::get('edit/{uuid}', [PeminjamanController::class, 'edit']);
+        Route::post('update/{uuid}', [PeminjamanController::class, 'update']);
+        Route::post('store', [PeminjamanController::class, 'add'])->withoutMiddleware(['auth', 'verified', 'json']);
+        Route::apiResource('peminjaman', PeminjamanController::class)
+            ->except(['index', 'add']);
     });
 
     Route::prefix('item')->group(function () {

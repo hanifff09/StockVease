@@ -11,8 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('peminjamen', function (Blueprint $table) {
+        Schema::create('peminjaman', function (Blueprint $table) {
             $table->id();
+            $table->uuid()->unique();
+            $table->string('nama');
+            $table->string('nip');  
+            $table->text('alasan_pinjam')->nullable();  
+            $table->string('item');
+            $table->date('tanggal_peminjaman');
+            $table->date('tanggal_pengembalian');
             $table->timestamps();
         });
     }
@@ -22,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('peminjamen');
+        Schema::dropIfExists('peminjaman');
     }
 };
