@@ -85,6 +85,15 @@ const routes: Array<RouteRecordRaw> = [
                 },
             },
             {
+                path: "/dashboard/peminjaman",
+                name: "peminjaman",
+                component: () => import("@/pages/dashboard/peminjaman/Index.vue"),
+                meta: {
+                    pageTitle: "peminjaman",
+                    breadcrumbs: ["peminjaman"],
+                },
+            },
+            {
                 path: "/dashboard/profile",
                 name: "dashboard.profile",
                 component: () => import("@/pages/dashboard/profile/Index.vue"),
@@ -100,6 +109,39 @@ const routes: Array<RouteRecordRaw> = [
                 meta: {
                     pageTitle: "Website Setting",
                     breadcrumbs: ["Website", "Setting"],
+                },
+            },
+            {
+                path: "/dashboard/raw",
+                name: "raw",
+                component: () => import("@/pages/dashboard/raw/Index.vue"),
+                meta: {
+                    pageTitle: "raw",
+                    breadcrumbs: ["raw"],
+                },
+            },{
+                path: "/dashboard/confirm",
+                name: "confirm",
+                component: () => import("@/pages/dashboard/confirm/Index.vue"),
+                meta: {
+                    pageTitle: "confirm",
+                    breadcrumbs: ["confirm"],
+                },
+            },{
+                path: "/dashboard/loan",
+                name: "loan",
+                component: () => import("@/pages/dashboard/loan/Index.vue"),
+                meta: {
+                    pageTitle: "loan",
+                    breadcrumbs: ["loan"],
+                },
+            },{
+                path: "/dashboard/late",
+                name: "late",
+                component: () => import("@/pages/dashboard/late/Index.vue"),
+                meta: {
+                    pageTitle: "late",
+                    breadcrumbs: ["late"],
                 },
             },
 

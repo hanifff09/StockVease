@@ -45,10 +45,10 @@ onMounted(() => {
 
     <div class="card px-15 pt-15 pb-5 m-10">
         <div class="row">
-            <div class="col-12 col-md-7">
+            <div class="col-8 col-md-5">
                 <img :src="`/storage/${items.image}`" class="img-fluid w-100 rounded border border-dark-subtle" alt="Item Image">
             </div>
-            <div class="col-12 col-md-5">
+            <div class="col-8 col-md-3">
                 <h1 class="mb-5">{{ items.nama }}</h1>
                 <p class="mb-5">{{ items.deskripsi }}</p>
                 <span>{{ items.kondisi }}</span>

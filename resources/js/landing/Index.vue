@@ -22,7 +22,7 @@ const getCategory = async () => {
   }
 };
 
-const getItem = async () => {
+const getItem = async () => {   
   try {
     const response = await axios.get("/item/get");
     items.value = response.data.data;

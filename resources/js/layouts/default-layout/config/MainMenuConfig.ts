@@ -67,6 +67,42 @@ const MainMenuConfig: Array<MenuItem> = [
                 name: "setting",
                 keenthemesIcon: "setting-2",
             },
+            {
+                heading: "Item",
+                route: "/dashboard/item",
+                name: "item",
+                keenthemesIcon: "basket",
+            },
+            {
+                heading: "Data Peminjam",
+                route: "/dashboard/peminjaman",
+                name: "peminjaman",
+                keenthemesIcon: "user",
+            },
+            {
+                heading: "Data Baru",   
+                route: "/dashboard/raw",
+                name: "peminjaman",
+                keenthemesIcon: "sort",
+            },
+            {
+                heading: "Konfirmasi",
+                route: "/dashboard/confirm",
+                name: "peminjaman",
+                keenthemesIcon: "verify",
+            },
+            {
+                heading: "Sedang Dipinjam",
+                route: "/dashboard/loan",
+                name: "peminjaman",
+                keenthemesIcon: "loading",
+            },
+            {
+                heading: "Belum Dikembalikan",
+                route: "/dashboard/late",
+                name: "peminjaman",
+                keenthemesIcon: "compass",
+            },
         ],
     },
 ];

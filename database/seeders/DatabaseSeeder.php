@@ -19,7 +19,9 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             CategorySeeder::class,
             KondisiSeeder::class,
-            ItemSeeder::class
+            ItemSeeder::class,
+            PeminjamanSeeder::class,
+            // DipinjamSeeder::class
         ]);
     }
 }

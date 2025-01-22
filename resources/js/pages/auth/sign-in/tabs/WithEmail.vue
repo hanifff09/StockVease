@@ -137,11 +137,11 @@ export default defineComponent({
                         const cleanedURL = redirect.replace(/^(?:\/\/|[^/]+)*\//, ''); // Clean up the URL
                         this.router.push(cleanedURL);
                     } else {
-                        this.router.push("/spv/landing");
+                        this.router.push("/dashboard");
                     }
                 } else if (userRoleId === 3) {
                     // Staff role
-                    this.router.push("/staff/landing");
+                    this.router.push("/dashboard");
                 }
             }).catch((err) => {
                 toast.error(err.response.data.message);

@@ -59,7 +59,7 @@ for (let i = new Date().getFullYear(); i >= new Date().getFullYear() - 2; i--) {
             <KTUserMenu />
             <!--end::Menu wrapper-->
         </div>
-        <!--end::User menu-->
+        <!--end::User menu-->   
 
         <!--begin::Header menu toggle-->
         <div class="app-navbar-item d-lg-none ms-2 me-n2" v-tooltip title="Show header menu">

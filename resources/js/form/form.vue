@@ -6,13 +6,12 @@ import { ref, onMounted } from "vue";
 import { Field, ErrorMessage, Form } from 'vee-validate';
 import * as yup from 'yup';
 import { useRoute, useRouter } from "vue-router";
-// import DatePicker from 'vue-datepicker';
+import { toast } from 'vue3-toastify';
 
 const router = useRouter();
 const items = ref({});
 const route = useRoute();
 
-// Form validation schema
 const schema = yup.object({
   nama: yup.string().required('Nama wajib diisi'),
   nip: yup.string().required('NIP wajib diisi'),
@@ -47,8 +46,8 @@ const submitForm = async () => {
     try {
         const response = await axios.post('/peminjaman/store', initialValues.value);
         if (response.data.status) {
-            // Redirect atau tampilkan pesan sukses
-            router.push('/peminjaman'); // Sesuaikan dengan route yang sesuai
+            toast.success('Data berhasil disimpan');
+            router.push('/'); 
         }
     } catch (error) {
         console.error("Error submitting form:", error.response);

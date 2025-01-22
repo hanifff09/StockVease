@@ -21,24 +21,27 @@ const baseColumns = [
         header: "no",
     }),
     column.accessor("nama", {
-        header: "Nama",
+        header: "nama",
     }),
-    column.accessor("category.nama", {
-        header: "Category",
+    column.accessor("nip", {
+        header: "nip",
     }),
-    column.accessor("kondisi.kondisi", {
-        header: "Kondisi",
+    column.accessor("alasan_pinjam", {
+        header: "alasa pinjam",
     }),
-    column.accessor("deskripsi", {
-        header: "Deskripsi",
+    column.accessor("item", {
+        header: "item",
     }),
-    column.accessor("stok", {
-        header: "Stok",
+    column.accessor("tanggal_peminjaman", {
+        header: "tanggal peminjaman",
     }),
-    column.accessor("image", {
-        header: "Image",
-        cell: cell => h('img', { src: `/storage/${cell.getValue()}`, width: 150 }),
+    column.accessor("tanggal_pengembalian", {
+        header: "tanggal peminjaman",
     }),
+    // column.accessor("image", {
+    //     header: "Image",
+    //     cell: cell=> h('img', {src: `/storage/${cell.getValue()}`, width: 150}),
+    // }),
 ];
 
 const actionColumn = column.accessor("uuid", {
@@ -68,12 +71,13 @@ const actionColumn = column.accessor("uuid", {
     ]),
 });
 
-const columns = user.id === 1 ? [...baseColumns, actionColumn] : baseColumns;   
+const columns = user.id === 1 ? [...baseColumns, actionColumn] : baseColumns;
+
 const router = useRouter()
 
 const refresh = () => paginateRef.value.refetch();
 
-watch(openForm, (val) => {  
+watch(openForm, (val) => {
     if (!val) {
         selected.value = "";
     }
@@ -82,20 +86,27 @@ watch(openForm, (val) => {
 </script>
 
 <template>
-    <Form v-if="openForm && user.id === 1" :selected="selected" @close="openForm = false" @refresh="refresh" />
+    <Form v-if="openForm && user.id === 1" :selected="selected" @close="openForm = false" @refresh="refresh" /> 
 
     <div class="card">
         <div class="card-header align-items-center">
-            <h2 class="mb-0">List Item</h2>
+            <h2 class="mb-0">List Data Peminjaman</h2>
             <button v-if="!openForm && user.id === 1" type="button" class="btn btn-sm btn-primary ms-10"
-                @click="openForm = true">
+
+                @click="openForm = true"
+            >
                 Add
                 <i class="la la-plus"></i>
             </button>
         </div>
         <div class="card-body">
-            <paginate ref="paginateRef" id="table-promo" url="/item" :columns="columns"
-                :payload="{ uuid: $route.params.uuid }"></paginate>
+            <paginate
+                ref="paginateRef"
+                id="table-promo"
+                url="/peminjaman"
+                :columns="columns"
+                :payload="{uuid: $route.params.uuid}"
+            ></paginate>
         </div>
     </div>
 </template>

@@ -11,13 +11,13 @@ class KondisiSeeder extends Seeder
     public function run()
     {
         Kondisi::create([
-            'kondisi' => '100%',
+            'kondisi' => 'Sangat Baik',
         ]);
         Kondisi::create([
-            'kondisi' => '90%',
+            'kondisi' => 'Cukup Baik',
         ]);
         Kondisi::create([
-            'kondisi' => '80%',
+            'kondisi' => 'Baik',
         ]);
     }
 }
