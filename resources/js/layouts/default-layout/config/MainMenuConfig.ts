@@ -54,11 +54,6 @@ const MainMenuConfig: Array<MenuItem> = [
                         route: "/dashboard/kondisi",
                         name: "kondisi",
                     },
-                    {
-                        heading: "Item",
-                        route: "/dashboard/item",
-                        name: "item",
-                    },
                 ],
             },
             {
@@ -82,25 +77,25 @@ const MainMenuConfig: Array<MenuItem> = [
             {
                 heading: "Data Baru",   
                 route: "/dashboard/raw",
-                name: "peminjaman",
+                name: "raw",
                 keenthemesIcon: "sort",
             },
             {
                 heading: "Konfirmasi",
                 route: "/dashboard/confirm",
-                name: "peminjaman",
+                name: "confirm",
                 keenthemesIcon: "verify",
             },
             {
                 heading: "Sedang Dipinjam",
                 route: "/dashboard/loan",
-                name: "peminjaman",
+                name: "loan",
                 keenthemesIcon: "loading",
             },
             {
                 heading: "Belum Dikembalikan",
                 route: "/dashboard/late",
-                name: "peminjaman",
+                name: "late",
                 keenthemesIcon: "compass",
             },
         ],

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('nip');  
             $table->text('alasan_pinjam')->nullable();  
             $table->string('item');
+            $table->integer('status')->default(0);
             $table->date('tanggal_peminjaman');
             $table->date('tanggal_pengembalian');
             $table->timestamps();

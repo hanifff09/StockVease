@@ -17,6 +17,7 @@ class Peminjaman extends Model
         'nip',
         'alasan_pinjam',
         'item',
+        'status',
         'tanggal_peminjaman',
         'tanggal_pengembalian',
     ];

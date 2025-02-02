@@ -10,6 +10,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\KondisiController;
 use App\Http\Controllers\PeminjamanController;
+use App\Http\Controllers\DataBaruController;
 
 /*
 |--------------------------------------------------------------------------
@@ -102,5 +103,13 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         Route::post('store', [ItemController::class, 'store']);
         Route::apiResource('item', ItemController::class)
             ->except(['index', 'store']);
+    });
+    Route::prefix('databaru')->group(function () {
+        Route::post('raw', [DataBaruController::class, 'index']);
+        Route::get('{uuid}', [DataBaruController::class, 'update']);
+        Route::post('confirm', [DataBaruController::class, 'index1']);
+        Route::get('{uuid}', [DataBaruController::class, 'update1']);   
+        Route::post('loan', [DataBaruController::class, 'index2']);
+        Route::post('late', [DataBaruController::class, 'index3']);
     });
 });

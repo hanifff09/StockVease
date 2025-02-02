@@ -36,7 +36,7 @@ const baseColumns = [
         header: "tanggal peminjaman",
     }),
     column.accessor("tanggal_pengembalian", {
-        header: "tanggal peminjaman",
+        header: "tanggal pengembalian",
     }),
     // column.accessor("image", {
     //     header: "Image",
