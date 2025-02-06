@@ -31,13 +31,21 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
             pageTitle:"Form",
         },
-    },
+},
     {
         path: "/detail/:uuid",
         name: "detail",
         component: () => import("@/detail/detail.vue"),
         meta: {
             pageTitle:"Detail",
+        },
+    },
+    {
+        path: "/verif/:uuid",
+        name: "verif",
+        component: () => import("@/verif/verif.vue"),
+        meta: {
+            pageTitle:"verif",
         },
     },
     {
@@ -142,6 +150,14 @@ const routes: Array<RouteRecordRaw> = [
                 meta: {
                     pageTitle: "late",
                     breadcrumbs: ["late"],
+                },
+            },{
+                path: "/dashboard/done",
+                name: "done",
+                component: () => import("@/pages/dashboard/done/Index.vue"),
+                meta: {
+                    pageTitle: "done",
+                    breadcrumbs: ["done"],
                 },
             },
 

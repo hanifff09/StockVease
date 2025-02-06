@@ -11,17 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('peminjaman', function (Blueprint $table) {
+        Schema::create('verification_sessions', function (Blueprint $table) {
             $table->id();
             $table->uuid()->unique();
-            $table->string('nama');
+            $table->string('name');
             $table->string('email');
-            $table->string('nip');  
-            $table->text('alasan_pinjam')->nullable();  
-            $table->string('item');
-            $table->integer('status')->default(0);
-            $table->date('tanggal_peminjaman');
-            $table->date('tanggal_pengembalian');
+            $table->string('verification_code');
+            $table->string('session_token');
+            $table->string('item_uuid')->nullable();
+            $table->timestamp('expires_at');
+            $table->boolean('is_verified')->default(false);
             $table->timestamps();
         });
     }
@@ -31,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('peminjaman');
+        Schema::dropIfExists('verification_sessions');
     }
 };

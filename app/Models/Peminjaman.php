@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Peminjaman extends Model
 {
-    use HasFactory, Uuid    ;
+    use HasFactory, Uuid;
 
     protected $table  = 'peminjaman';
 
     protected $fillable = [
         'nama',
+        'email',
         'nip',
         'alasan_pinjam',
         'item',

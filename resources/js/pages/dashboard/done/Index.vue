@@ -4,8 +4,6 @@ import { useDelete } from "@/libs/hooks";
 import { createColumnHelper } from "@tanstack/vue-table";
 import { useRouter } from 'vue-router'
 import { useAuthStore } from "@/stores/auth";
-import axios from "@/libs/axios";
-import Swal from "sweetalert2";
 
 const column = createColumnHelper<Item>();
 const paginateRef = ref<any>(null);
@@ -36,7 +34,7 @@ const baseColumns = [
     column.accessor("text_status", {
         header: "status",
         cell: cell => h('div', [
-          h('span', { class: 'badge badge-light-info' }, cell.getValue())
+          h('span', { class: 'badge badge-light-success' }, cell.getValue())
         ])
     }),
     column.accessor("tanggal_peminjaman", {
@@ -54,15 +52,27 @@ const actionColumn = column.accessor("uuid", {
         h(
             "button",
             {
-                class: "btn btn-sm btn-icon btn-success",
-                onClick: () => handleConfirmation(cell.getValue()),
+                class: "btn btn-sm btn-icon btn-info",
+                onClick: () => {
+                    selected.value = cell.getValue();
+                    openForm.value = true;
+                },
             },
-            h("i", { class: "la la-check fs-2" })
+            h("i", { class: "la la-pencil fs-2" })
+        ),
+        h(
+            "button",
+            {
+                class: "btn btn-sm btn-icon btn-danger",
+                onClick: () =>
+                    deleteUser(`item/item/${cell.getValue()}`),
+            },
+            h("i", { class: "la la-trash fs-2" })
         ),
     ]),
 });
 
-const columns = [...baseColumns, actionColumn];
+const columns = user.id === 1 ? [...baseColumns, actionColumn] : baseColumns;
 
 const router = useRouter()
 
@@ -74,59 +84,18 @@ watch(openForm, (val) => {
     }
     window.scrollTo(0, 0);
 });
-
-async function handleConfirmation(uuid) {
-    try {
-        const result = await Swal.fire({
-            title: 'Konfirmasi',
-            text: 'Apakah Anda telah mengecek barang dengan detail dan sudah diterima olah pegawai?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Ya, Benar',
-            cancelButtonText: 'Batal',
-            confirmButtonColor: 'success',
-            cancelButtonColor: '#d33'
-        });
-
-        if (result.isConfirmed) {
-            await update(uuid);
-            await Swal.fire(
-                'Berhasil!',
-                'Data telah dikonfirmasi.',
-                'success'
-            );
-            router.push('/dashboard/loan');
-        }
-    } catch (error) {
-        Swal.fire(
-            'Error!',
-            'Terjadi kesalahan saat mengonfirmasi data.',
-            'error'
-        );
-        console.error(error);
-    }
-}
-
-async function update(uuid) {
-    try {
-        await axios.get(`databaru/def/${uuid}`);
-    } catch (err) {
-        console.error(err);
-        throw err;
-    }
-}
 </script>
 
 <template>
     <div class="card">
         <div class="card-header align-items-center">
-            <h2 class="mb-0">Data Yang Sudah Dikonfirmasi</h2>
+            <h2 class="mb-0">Peminjaman Selesai</h2>
         </div>
         <div class="card-body">
             <paginate
                 ref="paginateRef"
                 id="table-promo"
-                url="/databaru/confirm"
+                url="/databaru/done"
                 :columns="columns"
                 :payload="{uuid: $route.params.uuid}"
             ></paginate>

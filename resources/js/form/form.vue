@@ -9,55 +9,78 @@ import { useRoute, useRouter } from "vue-router";
 import { toast } from 'vue3-toastify';
 
 const router = useRouter();
-const items = ref({});
 const route = useRoute();
+const item = ref({});
 
 const schema = yup.object({
-  nama: yup.string().required('Nama wajib diisi'),
-  nip: yup.string().required('NIP wajib diisi'),
-  alasan_pinjam: yup.string().required('Alasan pinjam wajib diisi'),
-  item: yup.string().required('Item wajib diisi'),
-  tanggal_peminjaman: yup.date().required('Tanggal peminjaman wajib diisi'),
-  tanggal_pengembalian: yup.date()
-    .required('Tanggal pengembalian wajib diisi')
-    .min(yup.ref('tanggal_peminjaman'), 'Tanggal pengembalian harus setelah tanggal peminjaman')
+    nama: yup.string().required('Nama wajib diisi'),
+    nip: yup.string().required('NIP wajib diisi'),
+    alasan_pinjam: yup.string().required('Alasan pinjam wajib diisi'),
+    item: yup.string().required('Item wajib diisi'),
+    tanggal_peminjaman: yup.date().required('Tanggal peminjaman wajib diisi'),
+    tanggal_pengembalian: yup.date()
+        .required('Tanggal pengembalian wajib diisi')
+        .min(yup.ref('tanggal_peminjaman'), 'Tanggal pengembalian harus setelah tanggal peminjaman')
 });
 
+// Get verification data from localStorage
+const verificationData = JSON.parse(localStorage.getItem('verificationData') || '{}');
+
 const initialValues = ref({
-  nama: '',
-  nip: '',
-  alasan_pinjam: '',
-  item: items.value?.nama || '',
-  tanggal_peminjaman: '',
-  tanggal_pengembalian: ''
+    nama: verificationData.name || '',
+    email: verificationData.email || '',
+    nip: '',
+    alasan_pinjam: '',
+    item: '',
+    tanggal_peminjaman: '',
+    tanggal_pengembalian: ''
 });
 
 const getItem = async () => {
     try {
         const response = await axios.get(`/item/edit/${route.params.uuid}`);
-        items.value = response.data.data;
-        initialValues.value.item = items.value.nama;
+        item.value = response.data.data;
+        initialValues.value.item = item.value.nama;
     } catch (error) {
         console.error("Error fetching item:", error.response);
+        toast.error('Error loading item details');
     }
 };
 
 const submitForm = async () => {
     try {
-        const response = await axios.post('/peminjaman/store', initialValues.value);
+        if (!verificationData.session_token) {
+            toast.error('Silakan verifikasi email terlebih dahulu');
+            router.push(`/verification/${route.params.uuid}`);
+            return;
+        }
+
+        const response = await axios.post('/peminjaman/store', {
+            ...initialValues.value,
+            session_token: verificationData.session_token
+        });
+
         if (response.data.status) {
             toast.success('Data berhasil disimpan');
-            router.push('/'); 
+            localStorage.removeItem('verificationData');
+            router.push('/');
         }
     } catch (error) {
-        console.error("Error submitting form:", error.response);
+        toast.error(error.response?.data?.message || 'Terjadi kesalahan saat menyimpan data');
     }
 };
 
+// Check for verification on mount
 onMounted(() => {
+    if (!verificationData.session_token) {
+        toast.error('Silakan verifikasi email terlebih dahulu');
+        router.push(`/verif/${route.params.uuid}`);
+        return;
+    }
     getItem();
 });
 </script>
+
 
 <template>
 
@@ -90,6 +113,20 @@ onMounted(() => {
                 </div>
 
                 <div class="col-md-6 mt-5">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 required">
+                            Email
+                        </label>
+                        <Field class="form-control form-control-lg form-control-solid mt-3" type="text" name="email" autocomplete="off" placeholder="Masukan Email" v-model="initialValues.email"/>
+                        <div class="fv-plugins-message-container">
+                            <div class="fv-help-block">
+                                <ErrorMessage name="email" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-12 mt-5">
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">
                             Nomor Induk Pegawai (NIP)

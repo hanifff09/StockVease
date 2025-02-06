@@ -6,6 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\Peminjaman;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use App\Models\VerificationSession;
+use Illuminate\Support\Facades\Log;
 
 class PeminjamanController extends Controller
 {
@@ -22,29 +27,81 @@ class PeminjamanController extends Controller
                 ->orWhere('alasan_pinjam', 'like', "%$search%");
         })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
 
+        $data->map(function ($peminjaman) {
+            if ($peminjaman->status == 0) {
+                $peminjaman->text_status = 'Menunggu Dikonfirmasi';
+            }
+            elseif ($peminjaman->status == 1) {
+                $peminjaman->text_status = 'Pending';
+            }
+            elseif ($peminjaman->status == 2) {
+                $peminjaman->text_status = 'Dipinjam';
+            }   
+            elseif ($peminjaman->status == 3) {
+                $peminjaman->text_status = 'Terlambat';
+            }
+            elseif ($peminjaman->status == 4) {
+                $peminjaman->text_status = 'Selesai';
+            }
+            return $peminjaman;
+        });
+
         return response()->json($data);
     }
 
     public function add(Request $request)
     {
-        // Validasi data yang diterima
-        $validated = $request->validate([
-            'nama' => 'required|string',
-            'nip' => 'required|string',
-            'alasan_pinjam' => 'required|string',
-            'item' => 'required|string',
-            'tanggal_peminjaman' => 'required|date',
-            'tanggal_pengembalian' => 'required|date|after_or_equal:tanggal_peminjaman',
-        ]);
+        try {
+            // Validate the verification session
+            $session = VerificationSession::where('session_token', $request->session_token)
+                        ->where('is_verified', true)
+                        ->where('expires_at', '>', now())
+                        ->first();
 
-        $peminjaman = Peminjaman::create($validated);
-    
-        return response()->json([
-            'status' => true,
-            'message' => 'Data peminjaman berhasil disimpan.',
-            'data' => $peminjaman,
-        ]);
+            if (!$session) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Silakan verifikasi email Anda terlebih dahulu'
+                ], 403);
+            }
+
+            // Validate the form data
+            $validated = $request->validate([
+                'nama' => 'required|string',
+                'nip' => 'required|string',
+                'alasan_pinjam' => 'required|string',
+                'item' => 'required|string',
+                'tanggal_peminjaman' => 'required|date',
+                'tanggal_pengembalian' => 'required|date|after_or_equal:tanggal_peminjaman',
+            ]);
+
+            // Create peminjaman with verified email and name from session
+            $peminjaman = Peminjaman::create([
+                'uuid' => Str::uuid(),
+                ...$validated,
+                'email' => $session->email,
+                'nama' => $session->name
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Data peminjaman berhasil disimpan.',
+                'data' => $peminjaman
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error creating peminjaman:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal menyimpan data peminjaman: ' . $e->getMessage()
+            ], 500);
+        }
     }
+
 
     public function edit($id)
     {
@@ -92,4 +149,134 @@ class PeminjamanController extends Controller
             'code' => 200
         ]);
     }
+
+
+
+    public function sendOTP(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|min:2',
+                'email' => 'required|email'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => $validator->errors()->first()
+                ], 422);
+            }
+
+            // Generate OTP code (6 digits)
+            $otpCode = sprintf("%06d", mt_rand(1, 999999));
+            
+            // Generate session token
+            $sessionToken = Str::random(64);
+
+            // Create verification session first
+            $session = VerificationSession::create([
+                'uuid' => Str::uuid(),
+                'name' => $request->name,
+                'email' => $request->email,
+                'verification_code' => $otpCode,
+                'session_token' => $sessionToken,
+                'expires_at' => now()->addMinutes(15),
+                'item_uuid' => $request->item_uuid
+            ]);
+
+            // Send email using Brevo/Sendinblue
+            $apiKey = env('SENDINBLUE_API_KEY');
+            if (!$apiKey) {
+                Log::error('Sendinblue API key not configured');
+                throw new \Exception('Email service configuration missing');
+            }
+
+            $response = Http::withHeaders([
+                'api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json'
+            ])->post('https://api.brevo.com/v3/smtp/email', [
+                'sender' => [
+                    'name' => env('SENDINBLUE_SENDER_NAME'),
+                    'email' => env('SENDINBLUE_SENDER_EMAIL')
+                ],
+                'to' => [
+                    ['email' => $request->email, 'name' => $request->name]
+                ],
+                'subject' => 'Kode OTP Verifikasi Email',
+                'htmlContent' => view('emails.otp', [
+                    'name' => $request->name,
+                    'otpCode' => $otpCode
+                ])->render()
+            ]);
+
+            if (!$response->successful()) {
+                Log::error('Sendinblue API error', [
+                    'status' => $response->status(),
+                    'body' => $response->json()
+                ]);
+                throw new \Exception('Failed to send email: ' . $response->json()['message'] ?? 'Unknown error');
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Kode OTP telah dikirim ke email Anda',
+                'session_token' => $sessionToken
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error sending OTP:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal mengirim kode OTP: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function verifyOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'session_token' => 'required|string',
+            'otp' => 'required|string|size:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $session = VerificationSession::where('session_token', $request->session_token)
+                    ->where('verification_code', $request->otp)
+                    ->where('expires_at', '>', now())
+                    ->where('is_verified', false)
+                    ->first();
+
+        if (!$session) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Kode OTP tidak valid atau sudah kadaluarsa'
+            ], 400);
+        }
+
+        $session->is_verified = true;
+        $session->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Verifikasi OTP berhasil',
+            'data' => [
+                'name' => $session->name,
+                'email' => $session->email,
+                'item_uuid' => $session->item_uuid
+            ]
+        ]);
+    }
+
 }

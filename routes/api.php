@@ -89,6 +89,8 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         Route::post('show', [PeminjamanController::class, 'show']);
         Route::get('edit/{uuid}', [PeminjamanController::class, 'edit']);
         Route::post('update/{uuid}', [PeminjamanController::class, 'update']);
+        Route::post('send-otp', [PeminjamanController::class, 'sendOTP'])->withoutMiddleware(['auth', 'verified', 'json']);
+        Route::post('verify-otp', [PeminjamanController::class, 'verifyOTP'])->withoutMiddleware(['auth', 'verified', 'json']);
         Route::post('store', [PeminjamanController::class, 'add'])->withoutMiddleware(['auth', 'verified', 'json']);
         Route::apiResource('peminjaman', PeminjamanController::class)
             ->except(['index', 'add']);
@@ -106,10 +108,12 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
     });
     Route::prefix('databaru')->group(function () {
         Route::post('raw', [DataBaruController::class, 'index']);
-        Route::get('{uuid}', [DataBaruController::class, 'update']);
+        Route::get('abc/{uuid}', [DataBaruController::class, 'update']);
         Route::post('confirm', [DataBaruController::class, 'index1']);
-        Route::get('{uuid}', [DataBaruController::class, 'update1']);   
+        Route::get('def/{uuid}', [DataBaruController::class, 'update1']);  
         Route::post('loan', [DataBaruController::class, 'index2']);
+        Route::get('ghi/{uuid}', [DataBaruController::class, 'update2']);  
         Route::post('late', [DataBaruController::class, 'index3']);
+        Route::post('done', [DataBaruController::class, 'index4']);
     });
 });

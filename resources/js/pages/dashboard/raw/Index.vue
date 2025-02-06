@@ -5,6 +5,7 @@ import { createColumnHelper } from "@tanstack/vue-table";
 import { useRouter } from 'vue-router'
 import { useAuthStore } from "@/stores/auth";
 import axios from "@/libs/axios";
+import Swal from 'sweetalert2';
 
 const column = createColumnHelper<Item>();
 const paginateRef = ref<any>(null);
@@ -27,10 +28,16 @@ const baseColumns = [
         header: "nip",
     }),
     column.accessor("alasan_pinjam", {
-        header: "alasa pinjam",
+        header: "alasan pinjam",
     }),
     column.accessor("item", {
         header: "item",
+    }),
+    column.accessor("text_status", {
+        header: "status",
+        cell: cell => h('div', [
+          h('span', { class: 'badge badge-light-warning' }, cell.getValue())
+        ])
     }),
     column.accessor("tanggal_peminjaman", {
         header: "tanggal peminjaman",
@@ -48,10 +55,7 @@ const actionColumn = column.accessor("uuid", {
             "button",
             {
                 class: "btn btn-sm btn-icon btn-success",
-                onClick: () => {
-                    update(cell.getValue())
-                    router.push('/dashboard/confirm');
-                },
+                onClick: () => handleConfirmation(cell.getValue()),
             },
             h("i", { class: "la la-check fs-2" })
         ),
@@ -80,17 +84,52 @@ watch(openForm, (val) => {
     window.scrollTo(0, 0);
 });
 
-function update(uuid){
-    axios.get(`databaru/${uuid}`).catch(err => {
-        console.log(err)
-    })
+async function handleConfirmation(uuid) {
+    try {
+        const result = await Swal.fire({
+            title: 'Konfirmasi',
+            text: 'Apakah Anda ingin menkonfirmasi data ini?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Benar',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: 'success',
+            cancelButtonColor: '#d33'
+        });
+
+        if (result.isConfirmed) {
+            await update(uuid);
+            await Swal.fire(
+                'Berhasil!',
+                'Data telah dikonfirmasi.',
+                'success'
+            );
+            router.push('/dashboard/confirm');
+        }
+    } catch (error) {
+        Swal.fire(
+            'Error!',
+            'Terjadi kesalahan saat mengonfirmasi data.',
+            'error'
+        );
+        console.error(error);
+    }
+}
+
+async function update(uuid) {
+    try {
+        await axios.get(`databaru/abc/${uuid}`);
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
 }
 </script>
 
 <template>
     <div class="card">
         <div class="card-header align-items-center">
-            <h2 class="mb-0">List Data Peminjaman</h2>
+            <h2 class="mb-0">Data Peminjaman Baru</h2>
         </div>
         <div class="card-body">
             <paginate

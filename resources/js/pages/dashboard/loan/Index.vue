@@ -27,10 +27,16 @@ const baseColumns = [
         header: "nip",
     }),
     column.accessor("alasan_pinjam", {
-        header: "alasa pinjam",
+        header: "alasan pinjam",
     }),
     column.accessor("item", {
         header: "item",
+    }),
+    column.accessor("text_status", {
+        header: "status",
+        cell: cell => h('div', [
+          h('span', { class: 'badge badge-light-primary' }, cell.getValue())
+        ])
     }),
     column.accessor("tanggal_peminjaman", {
         header: "tanggal peminjaman",
@@ -50,26 +56,15 @@ const actionColumn = column.accessor("uuid", {
                 class: "btn btn-sm btn-icon btn-success",
                 onClick: () => {
                     update(cell.getValue())
-                    router.push('/dashboard/confirm');
+                    router.push('/dashboard/done');
                 },
             },
             h("i", { class: "la la-check fs-2" })
-        ),
-        h(
-            "button",
-            {
-                class: "btn btn-sm btn-icon btn-danger",
-                onClick: () =>
-                    deleteUser(`item/item/${cell.getValue()}`),
-            },
-            h("i", { class: "la la-times fs-2" })
         ),
     ]),
 });
 
 const columns = [...baseColumns, actionColumn];
-
-const router = useRouter()
 
 const refresh = () => paginateRef.value.refetch();
 
@@ -81,7 +76,7 @@ watch(openForm, (val) => {
 });
 
 function update(uuid){
-    axios.get(`databaru/${uuid}`).catch(err => {
+    axios.get(`databaru/ghi/${uuid}`).catch(err => {
         console.log(err)
     })
 }
@@ -90,7 +85,7 @@ function update(uuid){
 <template>
     <div class="card">
         <div class="card-header align-items-center">
-            <h2 class="mb-0">List Data Peminjaman</h2>
+            <h2 class="mb-0">Dalam Proses Peminjaman</h2>
         </div>
         <div class="card-body">
             <paginate

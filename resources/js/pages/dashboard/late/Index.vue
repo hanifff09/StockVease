@@ -26,10 +26,16 @@ const baseColumns = [
         header: "nip",
     }),
     column.accessor("alasan_pinjam", {
-        header: "alasa pinjam",
+        header: "alasan pinjam",
     }),
     column.accessor("item", {
         header: "item",
+    }),
+    column.accessor("text_status", {
+        header: "status",
+        cell: cell => h('div', [
+          h('span', { class: 'badge badge-light-danger' }, cell.getValue())
+        ])
     }),
     column.accessor("tanggal_peminjaman", {
         header: "tanggal peminjaman",
@@ -37,10 +43,6 @@ const baseColumns = [
     column.accessor("tanggal_pengembalian", {
         header: "tanggal pengembalian",
     }),
-    // column.accessor("image", {
-    //     header: "Image",
-    //     cell: cell=> h('img', {src: `/storage/${cell.getValue()}`, width: 150}),
-    // }),
 ];
 
 const actionColumn = column.accessor("uuid", {
@@ -87,7 +89,7 @@ watch(openForm, (val) => {
 <template>
     <div class="card">
         <div class="card-header align-items-center">
-            <h2 class="mb-0">List Data Peminjaman</h2>
+            <h2 class="mb-0">Jatuh Tempo</h2>
         </div>
         <div class="card-body">
             <paginate

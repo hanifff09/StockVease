@@ -27,11 +27,46 @@ const baseColumns = [
         header: "nip",
     }),
     column.accessor("alasan_pinjam", {
-        header: "alasa pinjam",
+        header: "alasan pinjam",
     }),
     column.accessor("item", {
         header: "item",
     }),
+    column.accessor("text_status", {
+  header: "status",
+  cell: (cell) => {
+    const status = cell.row.original.status;
+    const value = cell.getValue();
+    
+    let badgeClass = '';
+    
+    switch(status) {
+      case 0:
+        badgeClass = 'badge-light-warning';
+        break;
+      case 1:
+        badgeClass = 'badge-light-info';
+        break;
+      case 2:
+        badgeClass = 'badge-light-primary';
+        break;
+      case 3:
+        badgeClass = 'badge-light-danger';
+        break;
+      case 4:
+        badgeClass = 'badge-light-success';
+        break;
+      default:
+        badgeClass = 'badge-light-secondary'; // Default case
+    }
+
+    return h('div', [
+      h('span', { 
+        class: `badge ${badgeClass}`
+      }, value)
+    ]);
+  }
+}),
     column.accessor("tanggal_peminjaman", {
         header: "tanggal peminjaman",
     }),

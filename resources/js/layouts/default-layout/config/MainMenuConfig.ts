@@ -98,6 +98,12 @@ const MainMenuConfig: Array<MenuItem> = [
                 name: "late",
                 keenthemesIcon: "compass",
             },
+            {
+                heading: "Peminjaman Selesai",
+                route: "/dashboard/done",
+                name: "done",
+                keenthemesIcon: "archive-tick",
+            },
         ],
     },
 ];
