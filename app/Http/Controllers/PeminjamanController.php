@@ -44,6 +44,9 @@ class PeminjamanController extends Controller
             elseif ($peminjaman->status == 4) {
                 $peminjaman->text_status = 'Selesai';
             }
+            elseif ($peminjaman->status == 5) {
+                $peminjaman->text_status = 'Ditolak';
+            }
             return $peminjaman;
         });
 

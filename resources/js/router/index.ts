@@ -159,6 +159,14 @@ const routes: Array<RouteRecordRaw> = [
                     pageTitle: "done",
                     breadcrumbs: ["done"],
                 },
+            },{
+                path: "/dashboard/cancel",
+                name: "cancel",
+                component: () => import("@/pages/dashboard/cancel/Index.vue"),
+                meta: {
+                    pageTitle: "cancel",
+                    breadcrumbs: ["cancel"],
+                },
             },
 
             // MASTER

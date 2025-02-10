@@ -23,5 +23,15 @@ class PeminjamanSeeder extends Seeder
             'tanggal_peminjaman' => '2022-01-01',
             'tanggal_pengembalian' => '2022-01-02',
         ]);
+        Peminjaman::create([
+            'nama' => 'vyslen',
+            'email'=> 'vys@gmail.com',
+            'nip' => '12345678',
+            'alasan_pinjam' => 'sakit hati dan menguatkan',
+            'item' => 'Laptop huawei d14',
+            'status' => '0',
+            'tanggal_peminjaman' => '2022-01-01',
+            'tanggal_pengembalian' => '2022-01-02',
+        ]);
     }
 }

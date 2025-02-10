@@ -40,7 +40,7 @@ Route::get('/transactions/recent', [StaffController::class, 'getRecentTransactio
 
 Route::middleware(['auth', 'verified', 'json'])->group(function () {
     Route::prefix('setting')->middleware('can:setting')->group(function () {
-        Route::post('', [SettingController::class, 'update']);
+        Route::post('', [SettingController::class, 'update']);  
     });
 
     Route::prefix('master')->group(function () {
@@ -116,6 +116,8 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         Route::get('ghi/{uuid}', [DataBaruController::class, 'update2']);  
         Route::post('late', [DataBaruController::class, 'index3']);
         Route::post('done', [DataBaruController::class, 'index4']);
+        Route::post('cancel', [DataBaruController::class, 'index5']);
+        Route::get('jkl/{uuid}', [DataBaruController::class, 'update5']);  
         Route::get('send-late-email/{uuid}', [DataBaruController::class, 'sendLateReturnEmail']);
     });
 });

@@ -43,6 +43,15 @@ class DataBaruController extends Controller
         return response()->json($peminjaman);
     }
 
+    public function update5($uuid)
+    {
+        $peminjaman = Peminjaman::findByUuid($uuid);
+
+        $peminjaman->update(['status' => 5]);
+
+        return response()->json($peminjaman);
+    }
+
     public function index1(Request $request)
     {
         $per = $request->per ?? 10;
@@ -145,6 +154,29 @@ class DataBaruController extends Controller
         $data->map(function ($peminjaman) {
             if ($peminjaman->status == 4) {
                 $peminjaman->text_status = 'Selesai';
+            }
+            return $peminjaman;
+        });
+
+        return response()->json($data);
+    }
+
+    public function index5(Request $request)
+    {
+        $per = $request->per ?? 10;
+        $page = $request->page ? $request->page - 1 : 0;
+
+        DB::statement('set @no=0+' . $page * $per);
+        $data = Peminjaman::where('status', 5)->when($request->search, function (Builder $query, string $search) {
+            $query->where('nama', 'like', "%$search%")
+                ->orWhere('nip', 'like', "%$search%")
+                ->orWhere('item', 'like', "%$search%")
+                ->orWhere('alasan_pinjam', 'like', "%$search%");
+        })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
+
+        $data->map(function ($peminjaman) {
+            if ($peminjaman->status == 5) {
+                $peminjaman->text_status = 'Ditolak';
             }
             return $peminjaman;
         });

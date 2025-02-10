@@ -2,11 +2,12 @@
 import KTHeader from "@/layouts/default-layout/components/header/NavbarLanding.vue";
 import KTFooter from "@/layouts/default-layout/components/header/Footer.vue";
 import axios from "@/libs/axios";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { Field, ErrorMessage, Form } from 'vee-validate';
 import * as yup from 'yup';
 import { useRoute, useRouter } from "vue-router";
 import { toast } from 'vue3-toastify';
+import config from "@/layouts/default-layout/config/DefaultLayoutConfig";
 
 const router = useRouter();
 const route = useRoute();
@@ -107,6 +108,19 @@ onMounted(() => {
     }
     getItem();
 });
+
+const computedMinDate = computed(() => {
+    if (initialValues.value.tanggal_peminjaman) {
+        const startDate = new Date(initialValues.value.tanggal_peminjaman);
+        return startDate.fp_incr(1);
+    }
+    return null;
+});
+
+const isReturnDateDisabled = computed(() => {
+    return !initialValues.value.tanggal_peminjaman;
+});
+
 </script>
 
 
@@ -202,13 +216,13 @@ onMounted(() => {
                             Tanggal Pinjam
                         </label>
                         <Field v-model="initialValues.tanggal_peminjaman" class="form-control form-control-lg form-control-solid mt-3" name="tanggal_peminjaman" autocomplete="off"> 
-                        <date-picker v-model="initialValues.tanggal_peminjaman" placeholder="Masukan Tanggal Pinjam"/>
+                        <date-picker v-model="initialValues.tanggal_peminjaman" placeholder="Masukan Tanggal Pinjam" :config="{ minDate: 'today' }"/>
                     </Field>
                     <div class="fv-plugins-message-container">
                         <div class="fv-help-block">
                             <ErrorMessage name="booking_date" />
                         </div>
-                    </div>
+                    </div>2
                 </div>
                 </div>
 
@@ -217,8 +231,8 @@ onMounted(() => {
                         <label class="form-label fw-bold fs-6">
                             Tanggal Pengembalian
                         </label>
-                        <Field v-model="initialValues.tanggal_pengembalian" class="form-control form-control-lg form-control-solid mt-3" name="tanggal_pengembalian" autocomplete="off"> 
-                        <date-picker v-model="initialValues.tanggal_pengembalian" placeholder="Masukan Tanggal Pengembalian" />
+                        <Field v-model="initialValues.tanggal_pengembalian" class="form-control form-control-lg form-control-solid mt-3" name="tanggal_pengembalian" autocomplete="off" :disabled="isReturnDateDisabled"> 
+                        <date-picker v-model="initialValues.tanggal_pengembalian" placeholder="Masukan Tanggal Pengembalian" :config="{ minDate: computedMinDate }" :disabled="isReturnDateDisabled"/>
                         </Field>
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">

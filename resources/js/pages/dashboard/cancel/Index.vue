@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { h, ref, watch } from "vue";
 import { useDelete } from "@/libs/hooks";
-import Form from "./Form.vue";
 import { createColumnHelper } from "@tanstack/vue-table";
 import { useRouter } from 'vue-router'
 import { useAuthStore } from "@/stores/auth";
@@ -33,53 +32,17 @@ const baseColumns = [
         header: "item",
     }),
     column.accessor("text_status", {
-  header: "status",
-  cell: (cell) => {
-    const status = cell.row.original.status;
-    const value = cell.getValue();
-    
-    let badgeClass = '';
-    
-    switch(status) {
-      case 0:
-        badgeClass = 'badge-light-warning';
-        break;
-      case 1:
-        badgeClass = 'badge-light-info';
-        break;
-      case 2:
-        badgeClass = 'badge-light-primary';
-        break;
-      case 3:
-        badgeClass = 'badge-light-danger';
-        break;
-      case 4:
-        badgeClass = 'badge-light-success';
-        break;
-      case 5:
-        badgeClass = 'badge-light-danger';
-        break;
-      default:
-        badgeClass = 'badge-light-secondary'; // Default case
-    }
-
-    return h('div', [
-      h('span', { 
-        class: `badge ${badgeClass}`
-      }, value)
-    ]);
-  }
-}),
+        header: "status",
+        cell: cell => h('div', [
+          h('span', { class: 'badge badge-light-danger' }, cell.getValue())
+        ])
+    }),
     column.accessor("tanggal_peminjaman", {
         header: "tanggal peminjaman",
     }),
     column.accessor("tanggal_pengembalian", {
         header: "tanggal pengembalian",
     }),
-    // column.accessor("image", {
-    //     header: "Image",
-    //     cell: cell=> h('img', {src: `/storage/${cell.getValue()}`, width: 150}),
-    // }),
 ];
 
 const actionColumn = column.accessor("uuid", {
@@ -124,24 +87,15 @@ watch(openForm, (val) => {
 </script>
 
 <template>
-    <Form v-if="openForm && user.id === 1" :selected="selected" @close="openForm = false" @refresh="refresh" /> 
-
     <div class="card">
         <div class="card-header align-items-center">
-            <h2 class="mb-0">List Data Peminjaman</h2>
-            <button v-if="!openForm && user.id === 1" type="button" class="btn btn-sm btn-primary ms-10"
-
-                @click="openForm = true"
-            >
-                Add
-                <i class="la la-plus"></i>
-            </button>
+            <h2 class="mb-0">Peminjaman Selesai</h2>
         </div>
         <div class="card-body">
             <paginate
                 ref="paginateRef"
                 id="table-promo"
-                url="/peminjaman"
+                url="/databaru/cancel"
                 :columns="columns"
                 :payload="{uuid: $route.params.uuid}"
             ></paginate>

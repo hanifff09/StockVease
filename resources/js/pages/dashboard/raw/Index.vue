@@ -63,8 +63,8 @@ const actionColumn = column.accessor("uuid", {
             "button",
             {
                 class: "btn btn-sm btn-icon btn-danger",
-                onClick: () =>
-                    deleteUser(`item/item/${cell.getValue()}`),
+                onClick: () => handleConfirm(cell.getValue()),
+
             },
             h("i", { class: "la la-times fs-2" })
         ),
@@ -116,9 +116,50 @@ async function handleConfirmation(uuid) {
     }
 }
 
+async function handleConfirm(uuid) {
+    try {
+        const result = await Swal.fire({
+            title: 'Konfirmasi',
+            text: 'Apakah Anda ingin menolak data ini?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Benar',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: 'success',
+            cancelButtonColor: '#d33'
+        });
+
+        if (result.isConfirmed) {
+            await update5(uuid);
+            await Swal.fire(
+                'Berhasil!',
+                'Data berhasil ditolak.',
+                'success'
+            );
+            router.push('/dashboard/cancel');
+        }
+    } catch (error) {
+        Swal.fire(
+            'Error!',
+            'Terjadi kesalahan saat mengonfirmasi data.',
+            'error'
+        );
+        console.error(error);
+    }
+}
+
 async function update(uuid) {
     try {
         await axios.get(`databaru/abc/${uuid}`);
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+}
+
+async function update5(uuid) {
+    try {
+        await axios.get(`databaru/jkl/${uuid}`);
     } catch (err) {
         console.error(err);
         throw err;
