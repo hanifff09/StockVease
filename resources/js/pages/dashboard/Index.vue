@@ -6,6 +6,14 @@ const router = useRouter()
 const butt = () => {
   router.push('/dashboard/peminjaman');
 }
+
+const but = () => {
+  router.push('/dashboard/loan');
+}
+
+const bat = () => {
+  router.push('/dashboard/late');
+}
 </script>
 
 <template>
@@ -22,7 +30,7 @@ const butt = () => {
 
           <div class="col-xl-4 col-sm-6">
             <div
-              class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-success border-left-5 border-start d-block">
+              class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-success border-left-5 border-start d-block"  @click="but">
               <div class="symbol symbol-30px me-5 mb-8">
                 <span class="symbol-label">
                   <i class="ki-duotone ki-code fs-2x text-success">
@@ -46,7 +54,7 @@ const butt = () => {
 
           <div class="col-xl-4 col-sm-6">
             <div
-              class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-warning border-left-5 border-start d-block">
+              class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-warning border-left-5 border-start d-block"  @click="bat">
               <div class="symbol symbol-30px me-5 mb-8">
                 <span class="symbol-label">
                   <i class="ki-duotone ki-gear fs-2x text-warning">
@@ -67,7 +75,7 @@ const butt = () => {
           </div>
 
           <div class="col-xl-4 col-sm-6">
-            <div class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-info border-left-5 border-start d-block">
+            <div class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-info border-left-5 border-start d-block" @click="butt">
               <div class="symbol symbol-30px me-5 mb-8">
                 <span class="symbol-label">
                   <i class="ki-duotone ki-send fs-2x text-info">
@@ -83,7 +91,7 @@ const butt = () => {
                   </span>
                   <span class="text-gray-500 fw-semibold cursor fs-6">Seluruh rekapan data peminjaman</span>
                 </div>
-                <i class="fas fa-angle-double-right text-info fs-1 pointer" @click="butt"></i>
+                <!-- <i class="fas fa-angle-double-right text-info fs-1 pointer" @click="butt"></i> -->
               </div>
             </div>
           </div>

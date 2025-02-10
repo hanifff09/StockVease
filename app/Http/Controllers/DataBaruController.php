@@ -7,6 +7,8 @@ use App\Models\Peminjaman;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class DataBaruController extends Controller
 {
@@ -148,5 +150,99 @@ class DataBaruController extends Controller
         });
 
         return response()->json($data);
+    }
+
+    public function sendLateReturnEmail($uuid)
+    {
+        try {
+            // Logging untuk debugging
+            Log::info('Sending late email for UUID: ' . $uuid);
+    
+            $peminjaman = Peminjaman::where('uuid', $uuid)->first();
+            
+            if (!$peminjaman) {
+                Log::error('Peminjaman not found for UUID: ' . $uuid);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Data peminjaman tidak ditemukan'
+                ], 404);
+            }
+    
+            // Log data peminjaman untuk verifikasi
+            Log::info('Peminjaman data:', [
+                'nama' => $peminjaman->nama,
+                'email' => $peminjaman->email,
+                'item' => $peminjaman->item
+            ]);
+    
+            $apiKey = env('SENDINBLUE_API_KEY');
+            if (!$apiKey) {
+                Log::error('Sendinblue API key not configured');
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Email service configuration missing'
+                ], 500);
+            }
+    
+            // Pastikan email valid
+            if (!filter_var($peminjaman->email, FILTER_VALIDATE_EMAIL)) {
+                Log::error('Invalid email address: ' . $peminjaman->email);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Email tidak valid'
+                ], 400);
+            }
+    
+            $response = Http::withHeaders([
+                'api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json'
+            ])->post('https://api.brevo.com/v3/smtp/email', [
+                'sender' => [
+                    'name' => env('SENDINBLUE_SENDER_NAME', 'System'),
+                    'email' => env('SENDINBLUE_SENDER_EMAIL', 'noreply@yourapp.com')
+                ],
+                'to' => [
+                    ['email' => $peminjaman->email, 'name' => $peminjaman->nama]
+                ],
+                'subject' => 'Peringatan Pengembalian Barang',
+                'htmlContent' => view('emails.late-return', [
+                    'name' => $peminjaman->nama,
+                    'item' => $peminjaman->item,
+                    'tanggal_peminjaman' => $peminjaman->tanggal_peminjaman,
+                    'tanggal_pengembalian' => $peminjaman->tanggal_pengembalian
+                ])->render()
+            ]);
+    
+            // Log full response for debugging
+            Log::info('Sendinblue API Response:', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+    
+            if (!$response->successful()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Gagal mengirim email: ' . $response->body()
+                ], 500);
+            }
+    
+            return response()->json([
+                'status' => true,
+                'message' => 'Email peringatan berhasil dikirim'
+            ]);
+    
+        } catch (\Exception $e) {
+            // Extensive error logging
+            Log::error('Complete Error in sendLateReturnEmail:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+    
+            return response()->json([
+                'status' => false,
+                'message' => 'Sistem error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }   

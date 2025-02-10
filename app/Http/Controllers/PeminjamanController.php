@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Peminjaman;
+use App\Models\Item;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -278,5 +279,47 @@ class PeminjamanController extends Controller
             ]
         ]);
     }
+
+    public function updateStock($uuid, Request $request)
+{
+    try {
+        DB::beginTransaction();
+        
+        $item = Item::where('uuid', $uuid)->firstOrFail();
+        
+        // Check if stock is available
+        if ($item->stok <= 0) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Stok item tidak tersedia'
+            ], 400);
+        }
+
+        // Update stock
+        $item->stok = $item->stok - 1;
+        $item->save();
+
+        DB::commit();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Stok berhasil diperbarui',
+            'data' => $item
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        
+        Log::error('Error updating stock:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'status' => false,
+            'message' => 'Gagal memperbarui stok: ' . $e->getMessage()
+        ], 500);
+    }
+}
 
 }

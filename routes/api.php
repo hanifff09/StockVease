@@ -103,6 +103,7 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         Route::get('edit/{uuid}', [ItemController::class, 'edit'])->withoutMiddleware(['auth', 'verified', 'json']);
         Route::put('update/{uuid}', [ItemController::class, 'update']);
         Route::post('store', [ItemController::class, 'store']);
+        Route::put('update-stock/{uuid}', [PeminjamanController::class, 'updateStock'])->withoutMiddleware(['auth', 'verified', 'json']);
         Route::apiResource('item', ItemController::class)
             ->except(['index', 'store']);
     });
@@ -115,5 +116,6 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         Route::get('ghi/{uuid}', [DataBaruController::class, 'update2']);  
         Route::post('late', [DataBaruController::class, 'index3']);
         Route::post('done', [DataBaruController::class, 'index4']);
+        Route::get('send-late-email/{uuid}', [DataBaruController::class, 'sendLateReturnEmail']);
     });
 });

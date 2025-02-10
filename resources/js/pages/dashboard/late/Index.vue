@@ -4,6 +4,8 @@ import { useDelete } from "@/libs/hooks";
 import { createColumnHelper } from "@tanstack/vue-table";
 import { useRouter } from 'vue-router'
 import { useAuthStore } from "@/stores/auth";
+import axios from "@/libs/axios";
+import { toast } from "vue3-toastify";
 
 const column = createColumnHelper<Item>();
 const paginateRef = ref<any>(null);
@@ -45,34 +47,43 @@ const baseColumns = [
     }),
 ];
 
+const countdowns = ref<{ [key: string]: number }>({});
+const cooldownTime = 30; // cooldown dalam detik
+
+const startCountdown = (uuid: string) => {
+    countdowns.value[uuid] = cooldownTime;
+    const timer = setInterval(() => {
+        if (countdowns.value[uuid] > 0) {
+            countdowns.value[uuid]--;
+        } else {
+            clearInterval(timer);
+            delete countdowns.value[uuid];
+        }
+    }, 1000);
+};
+
 const actionColumn = column.accessor("uuid", {
     id: "actions",
     header: "Action",
-    cell: (cell) => h("div", { class: "d-flex gap-2" }, [
-        h(
-            "button",
-            {
-                class: "btn btn-sm btn-icon btn-info",
-                onClick: () => {
-                    selected.value = cell.getValue();
-                    openForm.value = true;
+    cell: (cell) => {
+        const uuid = cell.getValue();
+        return h("div", { class: "d-flex gap-2" }, [
+            h(
+                "button",
+                {
+                    class: `btn btn-sm btn-icon ${countdowns.value[uuid] ? 'btn-secondary' : 'btn-danger'}`,
+                    disabled: !!countdowns.value[uuid],
+                    onClick: () => sendLateEmail(uuid),
                 },
-            },
-            h("i", { class: "la la-pencil fs-2" })
-        ),
-        h(
-            "button",
-            {
-                class: "btn btn-sm btn-icon btn-danger",
-                onClick: () =>
-                    deleteUser(`item/item/${cell.getValue()}`),
-            },
-            h("i", { class: "la la-trash fs-2" })
-        ),
-    ]),
+                countdowns.value[uuid]
+                    ? h("span", { class: "fs-2" }, countdowns.value[uuid])
+                    : h("i", { class: "la la-envelope fs-2" })
+            ),
+        ]);
+    }
 });
 
-const columns = user.id === 1 ? [...baseColumns, actionColumn] : baseColumns;
+const columns = [...baseColumns, actionColumn];
 
 const router = useRouter()
 
@@ -84,6 +95,44 @@ watch(openForm, (val) => {
     }
     window.scrollTo(0, 0);
 });
+
+const sendLateEmail = async (uuid: string) => {
+
+    if (countdowns.value[uuid]) return; // Jika masih dalam cooldown, tidak melakukan apa-apa
+    
+    try {
+        const response = await axios.get(`databaru/send-late-email/${uuid}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (response.data.status) {
+            toast.success('Email peringatan berhasil dikirim', {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+            // Mulai countdown setelah berhasil
+            startCountdown(uuid);
+        } else {
+            toast.error(response.data.message || 'Gagal mengirim email', {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    } catch (error) {
+        const errorMessage = error.response 
+            ? error.response.data.message || error.response.statusText
+            : error.message;
+
+        toast.error(`Gagal mengirim email: ${errorMessage}`, {
+            position: 'top-right',
+            autoClose: 3000,
+        });
+    }
+};
+
 </script>
 
 <template>

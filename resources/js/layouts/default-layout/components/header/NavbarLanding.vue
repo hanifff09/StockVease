@@ -23,7 +23,7 @@
       <div class="collapse navbar-collapse">
         <div class="ms-auto">
           <div class="nav-link text-white mx-5 fs-2 fw-bold">
-            StockVease
+            StockVease 
           </div>
         </div>
       </div>

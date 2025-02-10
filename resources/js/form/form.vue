@@ -23,7 +23,6 @@ const schema = yup.object({
         .min(yup.ref('tanggal_peminjaman'), 'Tanggal pengembalian harus setelah tanggal peminjaman')
 });
 
-// Get verification data from localStorage
 const verificationData = JSON.parse(localStorage.getItem('verificationData') || '{}');
 
 const initialValues = ref({
@@ -40,10 +39,29 @@ const getItem = async () => {
     try {
         const response = await axios.get(`/item/edit/${route.params.uuid}`);
         item.value = response.data.data;
+        
+        // Check if item is available
+        if (item.value.stok <= 0) {
+            toast.error('Maaf, stok item ini sedang kosong');
+            router.push('/');
+            return;
+        }
+        
         initialValues.value.item = item.value.nama;
     } catch (error) {
         console.error("Error fetching item:", error.response);
         toast.error('Error loading item details');
+    }
+};
+
+const updateItemStock = async () => {
+    try {
+        await axios.put(`/item/update-stock/${route.params.uuid}`, {
+            stok: item.value.stok - 1
+        });
+    } catch (error) {
+        console.error("Error updating stock:", error.response);
+        throw new Error('Failed to update stock');
     }
 };
 
@@ -55,13 +73,23 @@ const submitForm = async () => {
             return;
         }
 
+        // Check stock availability again before submission
+        if (item.value.stok <= 0) {
+            toast.error('Maaf, stok item ini sedang kosong');
+            return;
+        }
+
+        // Create peminjaman record
         const response = await axios.post('/peminjaman/store', {
             ...initialValues.value,
             session_token: verificationData.session_token
         });
 
         if (response.data.status) {
-            toast.success('Data berhasil disimpan');
+            // Update stock after successful loan creation
+            await updateItemStock();
+            
+            toast.success('Peminjaman berhasil dan stok telah diperbarui');
             localStorage.removeItem('verificationData');
             router.push('/');
         }
