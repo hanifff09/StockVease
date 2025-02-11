@@ -119,5 +119,7 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         Route::post('cancel', [DataBaruController::class, 'index5']);
         Route::get('jkl/{uuid}', [DataBaruController::class, 'update5']);  
         Route::get('send-late-email/{uuid}', [DataBaruController::class, 'sendLateReturnEmail']);
+        Route::get('send-reject-email/{uuid}', [DataBaruController::class, 'sendRejectEmail']);
+        Route::get('send-confirm-email/{uuid}', [DataBaruController::class, 'sendConfirmEmail']);
     });
 });

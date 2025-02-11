@@ -89,7 +89,7 @@ watch(openForm, (val) => {
 <template>
     <div class="card">
         <div class="card-header align-items-center">
-            <h2 class="mb-0">Peminjaman Selesai</h2>
+            <h2 class="mb-0">Peminjaman Ditolak</h2>
         </div>
         <div class="card-body">
             <paginate

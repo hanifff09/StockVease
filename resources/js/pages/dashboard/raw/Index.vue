@@ -115,8 +115,7 @@ async function handleConfirmation(uuid) {
         console.error(error);
     }
 }
-
-async function handleConfirm(uuid) {
+ async function handleConfirm(uuid) {
     try {
         const result = await Swal.fire({
             title: 'Konfirmasi',
@@ -130,12 +129,26 @@ async function handleConfirm(uuid) {
         });
 
         if (result.isConfirmed) {
+            // First update the status
             await update5(uuid);
-            await Swal.fire(
-                'Berhasil!',
-                'Data berhasil ditolak.',
-                'success'
-            );
+            
+            // Then send the rejection email
+            try {
+                await axios.get(`databaru/send-reject-email/${uuid}`);
+                await Swal.fire(
+                    'Berhasil!',
+                    'Data berhasil ditolak dan email notifikasi telah dikirim.',
+                    'success'
+                );
+            } catch (emailError) {
+                console.error('Error sending email:', emailError);
+                await Swal.fire(
+                    'Perhatian!',
+                    'Data berhasil ditolak tetapi gagal mengirim email notifikasi.',
+                    'warning'
+                );
+            }
+            
             router.push('/dashboard/cancel');
         }
     } catch (error) {

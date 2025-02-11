@@ -79,7 +79,7 @@ async function handleConfirmation(uuid) {
     try {
         const result = await Swal.fire({
             title: 'Konfirmasi',
-            text: 'Apakah Anda telah mengecek barang dengan detail dan sudah diterima olah pegawai?',
+            text: 'Apakah Anda telah mengecek barang dengan detail dan berfungsi dengan normal?',
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Ya, Benar',
@@ -89,12 +89,26 @@ async function handleConfirmation(uuid) {
         });
 
         if (result.isConfirmed) {
+            // First update the status
             await update(uuid);
-            await Swal.fire(
-                'Berhasil!',
-                'Data telah dikonfirmasi.',
-                'success'
-            );
+            
+            // Then send the confirmation email
+            try {
+                await axios.get(`databaru/send-confirm-email/${uuid}`);
+                await Swal.fire(
+                    'Berhasil!',
+                    'Data telah dikonfirmasi dan email notifikasi telah dikirim.',
+                    'success'
+                );
+            } catch (emailError) {
+                console.error('Error sending email:', emailError);
+                await Swal.fire(
+                    'Perhatian!',
+                    'Data telah dikonfirmasi tetapi gagal mengirim email notifikasi.',
+                    'warning'
+                );
+            }
+            
             router.push('/dashboard/loan');
         }
     } catch (error) {

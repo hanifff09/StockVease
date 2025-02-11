@@ -90,7 +90,7 @@ class DataBaruController extends Controller
         $page = $request->page ? $request->page - 1 : 0;
 
         DB::statement('set @no=0+' . $page * $per);
-        $data = Peminjaman::where('status', 2)->where('tanggal_pengembalian', '>=', Carbon::now()->format('Y-m-d') )->when($request->search, function (Builder $query, string $search) {
+        $data = Peminjaman::where('status', 2)->where('tanggal_pengembalian', '>=', Carbon::now()->format('Y-m-d'))->when($request->search, function (Builder $query, string $search) {
             $query->where('nama', 'like', "%$search%")
                 ->orWhere('nip', 'like', "%$search%")
                 ->orWhere('item', 'like', "%$search%")
@@ -189,9 +189,9 @@ class DataBaruController extends Controller
         try {
             // Logging untuk debugging
             Log::info('Sending late email for UUID: ' . $uuid);
-    
+
             $peminjaman = Peminjaman::where('uuid', $uuid)->first();
-            
+
             if (!$peminjaman) {
                 Log::error('Peminjaman not found for UUID: ' . $uuid);
                 return response()->json([
@@ -199,14 +199,14 @@ class DataBaruController extends Controller
                     'message' => 'Data peminjaman tidak ditemukan'
                 ], 404);
             }
-    
+
             // Log data peminjaman untuk verifikasi
             Log::info('Peminjaman data:', [
                 'nama' => $peminjaman->nama,
                 'email' => $peminjaman->email,
                 'item' => $peminjaman->item
             ]);
-    
+
             $apiKey = env('SENDINBLUE_API_KEY');
             if (!$apiKey) {
                 Log::error('Sendinblue API key not configured');
@@ -215,7 +215,7 @@ class DataBaruController extends Controller
                     'message' => 'Email service configuration missing'
                 ], 500);
             }
-    
+
             // Pastikan email valid
             if (!filter_var($peminjaman->email, FILTER_VALIDATE_EMAIL)) {
                 Log::error('Invalid email address: ' . $peminjaman->email);
@@ -224,7 +224,7 @@ class DataBaruController extends Controller
                     'message' => 'Email tidak valid'
                 ], 400);
             }
-    
+
             $response = Http::withHeaders([
                 'api-key' => $apiKey,
                 'Content-Type' => 'application/json',
@@ -245,36 +245,212 @@ class DataBaruController extends Controller
                     'tanggal_pengembalian' => $peminjaman->tanggal_pengembalian
                 ])->render()
             ]);
-    
+
             // Log full response for debugging
             Log::info('Sendinblue API Response:', [
                 'status' => $response->status(),
                 'body' => $response->body()
             ]);
-    
+
             if (!$response->successful()) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Gagal mengirim email: ' . $response->body()
                 ], 500);
             }
-    
+
             return response()->json([
                 'status' => true,
                 'message' => 'Email peringatan berhasil dikirim'
             ]);
-    
         } catch (\Exception $e) {
             // Extensive error logging
             Log::error('Complete Error in sendLateReturnEmail:', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-    
+
             return response()->json([
                 'status' => false,
                 'message' => 'Sistem error: ' . $e->getMessage()
             ], 500);
         }
     }
-}   
+
+    public function sendRejectEmail($uuid)
+    {
+        try {
+            Log::info('Sending rejection email for UUID: ' . $uuid);
+
+            $peminjaman = Peminjaman::where('uuid', $uuid)->first();
+
+            if (!$peminjaman) {
+                Log::error('Peminjaman not found for UUID: ' . $uuid);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Data peminjaman tidak ditemukan'
+                ], 404);
+            }
+
+            Log::info('Peminjaman data:', [
+                'nama' => $peminjaman->nama,
+                'email' => $peminjaman->email,
+                'item' => $peminjaman->item
+            ]);
+
+            $apiKey = env('SENDINBLUE_API_KEY');
+            if (!$apiKey) {
+                Log::error('Sendinblue API key not configured');
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Email service configuration missing'
+                ], 500);
+            }
+
+            if (!filter_var($peminjaman->email, FILTER_VALIDATE_EMAIL)) {
+                Log::error('Invalid email address: ' . $peminjaman->email);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Email tidak valid'
+                ], 400);
+            }
+
+            $response = Http::withHeaders([
+                'api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json'
+            ])->post('https://api.brevo.com/v3/smtp/email', [
+                'sender' => [
+                    'name' => env('SENDINBLUE_SENDER_NAME', 'System'),
+                    'email' => env('SENDINBLUE_SENDER_EMAIL', 'noreply@yourapp.com')
+                ],
+                'to' => [
+                    ['email' => $peminjaman->email, 'name' => $peminjaman->nama]
+                ],
+                'subject' => 'Pemberitahuan Penolakan Peminjaman Barang',
+                'htmlContent' => view('emails.reject-loan', [
+                    'name' => $peminjaman->nama,
+                    'item' => $peminjaman->item,
+                    'tanggal_peminjaman' => $peminjaman->tanggal_peminjaman,
+                    'tanggal_pengembalian' => $peminjaman->tanggal_pengembalian,
+                    'alasan_pinjam' => $peminjaman->alasan_pinjam
+                ])->render()
+            ]);
+
+            Log::info('Sendinblue API Response:', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
+            if (!$response->successful()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Gagal mengirim email: ' . $response->body()
+                ], 500);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Email penolakan berhasil dikirim'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Complete Error in sendRejectEmail:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Sistem error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    public function sendConfirmEmail($uuid)
+    {
+        try {
+            Log::info('Sending confirmation email for UUID: ' . $uuid);
+
+            $peminjaman = Peminjaman::where('uuid', $uuid)->first();
+
+            if (!$peminjaman) {
+                Log::error('Peminjaman not found for UUID: ' . $uuid);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Data peminjaman tidak ditemukan'
+                ], 404);
+            }
+
+            Log::info('Peminjaman data:', [
+                'nama' => $peminjaman->nama,
+                'email' => $peminjaman->email,
+                'item' => $peminjaman->item
+            ]);
+
+            $apiKey = env('SENDINBLUE_API_KEY');
+            if (!$apiKey) {
+                Log::error('Sendinblue API key not configured');
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Email service configuration missing'
+                ], 500);
+            }
+
+            if (!filter_var($peminjaman->email, FILTER_VALIDATE_EMAIL)) {
+                Log::error('Invalid email address: ' . $peminjaman->email);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Email tidak valid'
+                ], 400);
+            }
+
+            $response = Http::withHeaders([
+                'api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json'
+            ])->post('https://api.brevo.com/v3/smtp/email', [
+                'sender' => [
+                    'name' => env('SENDINBLUE_SENDER_NAME', 'System'),
+                    'email' => env('SENDINBLUE_SENDER_EMAIL', 'noreply@yourapp.com')
+                ],
+                'to' => [
+                    ['email' => $peminjaman->email, 'name' => $peminjaman->nama]
+                ],
+                'subject' => 'Konfirmasi Peminjaman Barang - Silakan Ambil Barang',
+                'htmlContent' => view('emails.confirm-loan', [
+                    'name' => $peminjaman->nama,
+                    'item' => $peminjaman->item,
+                    'tanggal_peminjaman' => $peminjaman->tanggal_peminjaman,
+                    'tanggal_pengembalian' => $peminjaman->tanggal_pengembalian,
+                    'alasan_pinjam' => $peminjaman->alasan_pinjam
+                ])->render()
+            ]);
+
+            Log::info('Sendinblue API Response:', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
+            if (!$response->successful()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Gagal mengirim email: ' . $response->body()
+                ], 500);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Email konfirmasi berhasil dikirim'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Complete Error in sendConfirmEmail:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Sistem error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+}
