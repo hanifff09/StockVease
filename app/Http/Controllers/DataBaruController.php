@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Peminjaman;
+use App\Models\Item;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -45,11 +46,49 @@ class DataBaruController extends Controller
 
     public function update5($uuid)
     {
-        $peminjaman = Peminjaman::findByUuid($uuid);
+        try {
+            DB::beginTransaction();
 
-        $peminjaman->update(['status' => 5]);
+            $peminjaman = Peminjaman::findByUuid($uuid);
 
-        return response()->json($peminjaman);
+            // Cek apakah peminjaman sudah ditolak sebelumnya
+            if ($peminjaman->status === 5) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Peminjaman sudah ditolak sebelumnya'
+                ], 400);
+            }
+
+            // Temukan item terkait dan kembalikan stok
+            $item = Item::where('nama', $peminjaman->item)->first();
+            if ($item) {
+                $item->stok = $item->stok + 1;
+                $item->save();
+            }
+
+            // Update status peminjaman menjadi ditolak
+            $peminjaman->update(['status' => 5]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Peminjaman berhasil ditolak dan stok telah dikembalikan',
+                'data' => $peminjaman
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error rejecting peminjaman:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal menolak peminjaman: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function index1(Request $request)
@@ -106,13 +145,52 @@ class DataBaruController extends Controller
 
         return response()->json($data);
     }
+
     public function update2($uuid)
     {
-        $peminjaman = Peminjaman::findByUuid($uuid);
+        try {
+            DB::beginTransaction();
 
-        $peminjaman->update(['status' => 4]);
+            $peminjaman = Peminjaman::findByUuid($uuid);
 
-        return response()->json($peminjaman);
+            // Cek apakah peminjaman sudah selesai sebelumnya
+            if ($peminjaman->status === 4) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Peminjaman sudah selesai sebelumnya'
+                ], 400);
+            }
+
+            // Temukan item terkait dan kembalikan stok
+            $item = Item::where('nama', $peminjaman->item)->first();
+            if ($item) {
+                $item->stok = $item->stok + 1;
+                $item->save();
+            }
+
+            // Update status peminjaman menjadi selesai
+            $peminjaman->update(['status' => 4]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Peminjaman selesai dan stok telah dikembalikan',
+                'data' => $peminjaman
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error completing peminjaman:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal menyelesaikan peminjaman: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function index3(Request $request)
@@ -136,6 +214,53 @@ class DataBaruController extends Controller
         });
 
         return response()->json($data);
+    }
+
+    public function update3($uuid)
+    {
+        try {
+            DB::beginTransaction();
+
+            $peminjaman = Peminjaman::findByUuid($uuid);
+
+            // Cek apakah peminjaman sudah selesai sebelumnya
+            if ($peminjaman->status === 4) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Peminjaman sudah selesai sebelumnya'
+                ], 400);
+            }
+
+            // Temukan item terkait dan kembalikan stok
+            $item = Item::where('nama', $peminjaman->item)->first();
+            if ($item) {
+                $item->stok = $item->stok + 1;
+                $item->save();
+            }
+
+            // Update status peminjaman menjadi selesai
+            $peminjaman->update(['status' => 4]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Peminjaman selesai dan stok telah dikembalikan',
+                'data' => $peminjaman
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error completing peminjaman:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal menyelesaikan peminjaman: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function index4(Request $request)

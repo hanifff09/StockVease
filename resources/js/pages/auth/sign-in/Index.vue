@@ -44,11 +44,11 @@
 
         <div class="border-bottom border-gray-300 w-100 mt-5 mb-10"></div>
 
-        <div class="reset">
+        <!-- <div class="reset text-gray-400 fw-semobold fs-5 fw-bold text-center">
             <router-link :to="'/reset-pass' ">
-                lupa password?
+                Lupa Password?
             </router-link>
-        </div>
+        </div> -->
 
         <!--begin::Link-->
         <!-- <div class="text-gray-400 fw-semobold fs-4 text-center">

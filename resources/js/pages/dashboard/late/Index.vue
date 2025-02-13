@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from "@/stores/auth";
 import axios from "@/libs/axios";
 import { toast } from "vue3-toastify";
+import Swal from 'sweetalert2';
 
 const column = createColumnHelper<Item>();
 const paginateRef = ref<any>(null);
@@ -62,6 +63,47 @@ const startCountdown = (uuid: string) => {
     }, 1000);
 };
 
+async function handleConfirmation(uuid) {
+    try {
+        const result = await Swal.fire({
+            title: 'Konfirmasi',
+            text: 'Apakah Anda sudah memastikan bahwa barang telah kembali ke Anda dengan benar?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Benar',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: 'success',
+            cancelButtonColor: '#d33'
+        });
+
+        if (result.isConfirmed) {
+            await update(uuid);
+            await Swal.fire(
+                'Berhasil!',
+                'Data telah dikonfirmasi.',
+                'success'
+            );
+            router.push('/dashboard/done');
+        }
+    } catch (error) {
+        Swal.fire(
+            'Error!',
+            'Terjadi kesalahan saat mengonfirmasi data.',
+            'error'
+        );
+        console.error(error);
+    }
+}
+
+async function update(uuid) {
+    try {
+        await axios.get(`databaru/mno/${uuid}`);
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+}
+
 const actionColumn = column.accessor("uuid", {
     id: "actions",
     header: "Action",
@@ -79,6 +121,14 @@ const actionColumn = column.accessor("uuid", {
                     ? h("span", { class: "fs-2" }, countdowns.value[uuid])
                     : h("i", { class: "la la-envelope fs-2" })
             ),
+            h(
+            "button",
+            {
+                class: "btn btn-sm btn-icon btn-success",
+                onClick: () => handleConfirmation(cell.getValue()),
+            },
+            h("i", { class: "la la-check fs-2" })
+        ),
         ]);
     }
 });

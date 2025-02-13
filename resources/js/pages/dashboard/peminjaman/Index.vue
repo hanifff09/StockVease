@@ -23,6 +23,9 @@ const baseColumns = [
     column.accessor("nama", {
         header: "nama",
     }),
+    column.accessor("email", {
+        header: "email",
+    }),
     column.accessor("nip", {
         header: "nip",
     }),

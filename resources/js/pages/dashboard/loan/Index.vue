@@ -5,6 +5,8 @@ import { createColumnHelper } from "@tanstack/vue-table";
 import { useRouter } from 'vue-router'
 import { useAuthStore } from "@/stores/auth";
 import axios from "@/libs/axios";
+import Swal from 'sweetalert2';
+
 
 const column = createColumnHelper<Item>();
 const paginateRef = ref<any>(null);
@@ -54,17 +56,48 @@ const actionColumn = column.accessor("uuid", {
             "button",
             {
                 class: "btn btn-sm btn-icon btn-success",
-                onClick: () => {
-                    update(cell.getValue())
-                    router.push('/dashboard/done');
-                },
+                onClick: () => handleConfirmation(cell.getValue()),
             },
             h("i", { class: "la la-check fs-2" })
         ),
     ]),
 });
 
+async function handleConfirmation(uuid) {
+    try {
+        const result = await Swal.fire({
+            title: 'Konfirmasi',
+            text: 'Apakah Anda benar bahwa barang telah dikembalikan dengan benar?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Benar',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: 'success',
+            cancelButtonColor: '#d33'
+        });
+
+        if (result.isConfirmed) {
+            await update(uuid);
+            await Swal.fire(
+                'Berhasil!',
+                'Data telah dikonfirmasi.',
+                'success'
+            );
+            router.push('/dashboard/done');
+        }
+    } catch (error) {
+        Swal.fire(
+            'Error!',
+            'Terjadi kesalahan saat mengonfirmasi data.',
+            'error'
+        );
+        console.error(error);
+    }
+}
+
 const columns = [...baseColumns, actionColumn];
+
+const router = useRouter()
 
 const refresh = () => paginateRef.value.refetch();
 

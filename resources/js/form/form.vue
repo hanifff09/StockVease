@@ -23,7 +23,7 @@ const schema = yup.object({
         .required('Tanggal pengembalian wajib diisi')
         .min(yup.ref('tanggal_peminjaman'), 'Tanggal pengembalian harus setelah tanggal peminjaman')
 });
-
+    
 const verificationData = JSON.parse(localStorage.getItem('verificationData') || '{}');
 
 const initialValues = ref({
@@ -92,7 +92,7 @@ const submitForm = async () => {
             
             toast.success('Peminjaman berhasil dan stok telah diperbarui');
             localStorage.removeItem('verificationData');
-            router.push('/');
+            router.push('/redirect');
         }
     } catch (error) {
         toast.error(error.response?.data?.message || 'Terjadi kesalahan saat menyimpan data');
@@ -222,7 +222,7 @@ const isReturnDateDisabled = computed(() => {
                         <div class="fv-help-block">
                             <ErrorMessage name="booking_date" />
                         </div>
-                    </div>2
+                    </div>  
                 </div>
                 </div>
 

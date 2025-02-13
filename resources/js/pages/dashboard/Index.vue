@@ -22,27 +22,36 @@ const chartOptions = ref({
     }
   },
   series: [{
-    name: 'Peminjaman',
+    name: 'Total Peminjaman',
     data: []
   }],
-  xaxis: {
+  xaxis: {  
     categories: [],
     labels: {
       style: {
         colors: '#777777'
-      }
+      },
+      rotate: -45,
+      rotateAlways: false
     }
   },
   yaxis: {
     labels: {
       style: {
         colors: '#777777'
+      },
+      formatter: function(value) {
+        return Math.floor(value);
       }
+    },
+    title: {
+      text: 'Jumlah Peminjaman'
     }
   },
   colors: ['#009ef7'],
   stroke: {
-    curve: 'smooth'
+    curve: 'smooth',
+    width: 2 
   },
   fill: {
     type: 'gradient',
@@ -53,10 +62,18 @@ const chartOptions = ref({
     }
   },
   dataLabels: {
-    enabled: false
+    enabled: true,
+    formatter: function(val) {
+      return Math.floor(val);
+    }
   },
   tooltip: {
-    theme: 'dark'
+    theme: 'dark',
+    y: {
+      formatter: function(value) {
+        return Math.floor(value) + ' peminjaman';
+      }
+    }
   }
 });
 
@@ -83,15 +100,18 @@ const fetchStatistics = async () => {
 // Function untuk mengambil data chart
 const fetchChartData = async () => {
   try {
-    const response = await axios.post('/databaru/loan');
-
-    // Mengolah data untuk chart
-    const processedData = processLoanDataForChart(response.data);
-
-    // Update chart options dengan data yang sudah diolah
-    chartOptions.value.series[0].data = processedData.values;
-    chartOptions.value.xaxis.categories = processedData.labels;
-
+    const response = await axios.get('/peminjaman/monthly-stats');
+    
+    if (response.data.status) {
+      const data = response.data.data;
+      
+      chartOptions.value.series = [{
+        name: 'Total Peminjaman',
+        data: data.map(item => item.total)
+      }];
+      
+      chartOptions.value.xaxis.categories = data.map(item => item.month);
+    }
   } catch (error) {
     console.error('Error fetching chart data:', error);
   }
@@ -132,11 +152,8 @@ const bat = () => {
 }
 
 // Fetch data when component is mounted
-onMounted(async () => {
-  await Promise.all([
-    fetchStatistics(),
-    fetchChartData()
-  ]);
+onMounted(() => {
+  fetchChartData();
 });
 </script>
 
@@ -159,11 +176,14 @@ onMounted(async () => {
               @click="but">
               <div class="symbol symbol-30px me-5 mb-8">
                 <span class="symbol-label">
-                  <i class="ki-duotone ki-code fs-2x text-success">
+                  <i class="ki-duotone ki-scooter fs-2x text-success">
                     <span class="path1"></span>
                     <span class="path2"></span>
                     <span class="path3"></span>
                     <span class="path4"></span>
+                    <span class="path5"></span>
+                    <span class="path6"></span>
+                    <span class="path7"></span>
                   </i>
                 </span>
               </div>
@@ -183,7 +203,7 @@ onMounted(async () => {
               @click="bat">
               <div class="symbol symbol-30px me-5 mb-8">
                 <span class="symbol-label">
-                  <i class="ki-duotone ki-gear fs-2x text-warning">
+                  <i class="ki-duotone ki-time fs-2x text-warning">
                     <span class="path1"></span>
                     <span class="path2"></span>
                   </i>
@@ -205,7 +225,7 @@ onMounted(async () => {
               @click="butt">
               <div class="symbol symbol-30px me-5 mb-8">
                 <span class="symbol-label">
-                  <i class="ki-duotone ki-send fs-2x text-info">
+                  <i class="ki-duotone ki-user fs-2x text-info">
                     <span class="path1"></span>
                     <span class="path2"></span>
                   </i>

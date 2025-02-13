@@ -22,4 +22,9 @@ class Peminjaman extends Model
         'tanggal_peminjaman',
         'tanggal_pengembalian',
     ];
+
+    public static function findByUuid($uuid) 
+    {
+        return self::where('uuid', $uuid)->firstOrFail();
+    }
 }

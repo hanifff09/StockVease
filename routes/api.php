@@ -85,10 +85,13 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
 
     Route::prefix('peminjaman')->group(function () {
         Route::get('/get', [PeminjamanController::class, 'get']);
+        Route::post('store-admin', [PeminjamanController::class, 'addmin']);
+        Route::post('update-admin/{uuid}', [PeminjamanController::class, 'apdet']);
         Route::post('', [PeminjamanController::class, 'index']);
         Route::post('show', [PeminjamanController::class, 'show']);
         Route::get('edit/{uuid}', [PeminjamanController::class, 'edit']);
         Route::post('update/{uuid}', [PeminjamanController::class, 'update']);
+        Route::get('monthly-stats', [PeminjamanController::class, 'getMonthlyStats']);
         Route::post('send-otp', [PeminjamanController::class, 'sendOTP'])->withoutMiddleware(['auth', 'verified', 'json']);
         Route::post('verify-otp', [PeminjamanController::class, 'verifyOTP'])->withoutMiddleware(['auth', 'verified', 'json']);
         Route::post('store', [PeminjamanController::class, 'add'])->withoutMiddleware(['auth', 'verified', 'json']);
@@ -115,6 +118,7 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         Route::post('loan', [DataBaruController::class, 'index2']);
         Route::get('ghi/{uuid}', [DataBaruController::class, 'update2']);  
         Route::post('late', [DataBaruController::class, 'index3']);
+        Route::get('mno/{uuid}', [DataBaruController::class, 'update3']);  
         Route::post('done', [DataBaruController::class, 'index4']);
         Route::post('cancel', [DataBaruController::class, 'index5']);
         Route::get('jkl/{uuid}', [DataBaruController::class, 'update5']);  

@@ -3,7 +3,7 @@
     <div class="container-fluid">
 
       <a class="navbar-brand" href="#">
-        <img src="/media/misc/logotp.png" alt="Logo" class="d-inline-block align-text-top" height="70">
+        <img src="/media/misc/logotp.png" alt="Logo" class="d-inline-block align-text-top" height="50">
       </a>
 
       <!-- <div class="collapse navbar-collapse" id="navbarNav">

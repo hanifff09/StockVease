@@ -12,19 +12,19 @@ class CategorySeeder extends Seeder
     {
         Category::create([
             'nama' => 'Elektronik',
-            'image' => 'Category/vys htm.png',
+            'image' => 'Category/electronik.jpg',
             'deskripsi' => 'Barang-barang elektronik kantor',
         ]);
         
         Category::create([
             'nama' => 'Furnitur',
-            'image' => 'Category/vys htm.png',
+            'image' => 'Category/furniture.jpg',
             'deskripsi' => 'Peralatan furnitur kantor',
         ]);
 
         Category::create([
             'nama' => 'Peralatan Kantor',
-            'image' => 'Category/vys htm.png',
+            'image' => 'Category/tool.jpg',
             'deskripsi' => 'Printer, scanner, dan lainnya',
         ]);
     }

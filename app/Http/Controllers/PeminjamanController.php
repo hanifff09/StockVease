@@ -31,20 +31,15 @@ class PeminjamanController extends Controller
         $data->map(function ($peminjaman) {
             if ($peminjaman->status == 0) {
                 $peminjaman->text_status = 'Menunggu Dikonfirmasi';
-            }
-            elseif ($peminjaman->status == 1) {
+            } elseif ($peminjaman->status == 1) {
                 $peminjaman->text_status = 'Pending';
-            }
-            elseif ($peminjaman->status == 2) {
+            } elseif ($peminjaman->status == 2) {
                 $peminjaman->text_status = 'Dipinjam';
-            }   
-            elseif ($peminjaman->status == 3) {
+            } elseif ($peminjaman->status == 3) {
                 $peminjaman->text_status = 'Terlambat';
-            }
-            elseif ($peminjaman->status == 4) {
+            } elseif ($peminjaman->status == 4) {
                 $peminjaman->text_status = 'Selesai';
-            }
-            elseif ($peminjaman->status == 5) {
+            } elseif ($peminjaman->status == 5) {
                 $peminjaman->text_status = 'Ditolak';
             }
             return $peminjaman;
@@ -58,9 +53,9 @@ class PeminjamanController extends Controller
         try {
             // Validate the verification session
             $session = VerificationSession::where('session_token', $request->session_token)
-                        ->where('is_verified', true)
-                        ->where('expires_at', '>', now())
-                        ->first();
+                ->where('is_verified', true)
+                ->where('expires_at', '>', now())
+                ->first();
 
             if (!$session) {
                 return response()->json([
@@ -92,7 +87,6 @@ class PeminjamanController extends Controller
                 'message' => 'Data peminjaman berhasil disimpan.',
                 'data' => $peminjaman
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error creating peminjaman:', [
                 'error' => $e->getMessage(),
@@ -106,10 +100,48 @@ class PeminjamanController extends Controller
         }
     }
 
+    public function addmin(Request $request)
+{
+    try {
+        // Validate the form data
+        $validated = $request->validate([
+            'nama' => 'required|string',
+            'nip' => 'required|string',
+            'email' => 'required|email',
+            'alasan_pinjam' => 'required|string',
+            'item' => 'required|string',
+            'tanggal_peminjaman' => 'required|date',
+            'tanggal_pengembalian' => 'required|date|after_or_equal:tanggal_peminjaman',
+        ]);
 
-    public function edit($id)
+        // Create peminjaman
+        $peminjaman = Peminjaman::create([
+            'uuid' => Str::uuid(),
+            ...$validated
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Data peminjaman berhasil disimpan.',
+            'data' => $peminjaman
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error creating peminjaman:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'status' => false,
+            'message' => 'Gagal menyimpan data peminjaman: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+
+    public function edit($uuid)
     {
-        $peminjaman = Peminjaman::findOrFail($id);
+        $peminjaman = Peminjaman::findByUuid($uuid);
 
         return response()->json([
             'data' => $peminjaman,
@@ -121,10 +153,10 @@ class PeminjamanController extends Controller
         return response()->json(['data' => Peminjaman::all()]);
     }
 
-    public function update($id, Request $request)
+    public function update($uuid, Request $request)
     {
-        $peminjaman = Peminjaman::findOrFail($id);
-    
+        $peminjaman = Peminjaman::findOrFail($uuid);
+
         $request->validate([
             'nama' => 'required|string',
             'nip' => 'required|string',
@@ -133,28 +165,111 @@ class PeminjamanController extends Controller
             'tanggal_peminjaman' => 'required|date',
             'tanggal_pengembalian' => 'required|date|after_or_equal:tanggal_peminjaman',
         ]);
-    
+
         $peminjaman->update($request->all());
-    
+
         return response()->json([
             'status' => true,
             'message' => 'Data berhasil diubah'
         ]);
     }
-    
+    public function apdet($uuid, Request $request)
+    {
+        $peminjaman = Peminjaman::where('uuid', $uuid)->firstOrFail();
+
+        $request->validate([
+            'nama' => 'required|string',
+            'nip' => 'required|string',
+            'alasan_pinjam' => 'required|string',
+            'item' => 'required|string',
+            'tanggal_peminjaman' => 'required|date',
+            'tanggal_pengembalian' => 'required|date|after_or_equal:tanggal_peminjaman',
+        ]);
+
+        $peminjaman->update($request->all());
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Data berhasil diubah'
+        ]);
+    }
+
     public function destroy($id)
     {
         $peminjaman = Peminjaman::findOrFail($id);
-        
+
         $peminjaman->delete();
-        
+
         return response()->json([
             'message' => "Data telah dihapus",
             'code' => 200
         ]);
     }
 
+    public function updateStock($uuid, Request $request)
+    {
+        try {
+            DB::beginTransaction();
 
+            $item = Item::where('uuid', $uuid)->firstOrFail();
+
+            // Check if stock is available
+            if ($item->stok <= 0) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Stok item tidak tersedia'
+                ], 400);
+            }
+
+            // Update stock
+            $item->stok = $item->stok - 1;
+            $item->save();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Stok berhasil diperbarui',
+                'data' => $item
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error updating stock:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal memperbarui stok: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // In PeminjamanController.php
+
+    public function getMonthlyStats()
+    {
+        $monthlyStats = Peminjaman::selectRaw('
+        DATE_FORMAT(created_at, "%Y-%m") as month,
+        COUNT(*) as total_loans
+    ')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->map(function ($stat) {
+                return [
+                    'month' => date('M Y', strtotime($stat->month)),
+                    'total' => $stat->total_loans
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'data' => $monthlyStats
+        ]);
+    }
 
     public function sendOTP(Request $request)
     {
@@ -173,7 +288,7 @@ class PeminjamanController extends Controller
 
             // Generate OTP code (6 digits)
             $otpCode = sprintf("%06d", mt_rand(1, 999999));
-            
+
             // Generate session token
             $sessionToken = Str::random(64);
 
@@ -227,7 +342,6 @@ class PeminjamanController extends Controller
                 'message' => 'Kode OTP telah dikirim ke email Anda',
                 'session_token' => $sessionToken
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error sending OTP:', [
                 'error' => $e->getMessage(),
@@ -257,10 +371,10 @@ class PeminjamanController extends Controller
         }
 
         $session = VerificationSession::where('session_token', $request->session_token)
-                    ->where('verification_code', $request->otp)
-                    ->where('expires_at', '>', now())
-                    ->where('is_verified', false)
-                    ->first();
+            ->where('verification_code', $request->otp)
+            ->where('expires_at', '>', now())
+            ->where('is_verified', false)
+            ->first();
 
         if (!$session) {
             return response()->json([
@@ -282,47 +396,4 @@ class PeminjamanController extends Controller
             ]
         ]);
     }
-
-    public function updateStock($uuid, Request $request)
-{
-    try {
-        DB::beginTransaction();
-        
-        $item = Item::where('uuid', $uuid)->firstOrFail();
-        
-        // Check if stock is available
-        if ($item->stok <= 0) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Stok item tidak tersedia'
-            ], 400);
-        }
-
-        // Update stock
-        $item->stok = $item->stok - 1;
-        $item->save();
-
-        DB::commit();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Stok berhasil diperbarui',
-            'data' => $item
-        ]);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        
-        Log::error('Error updating stock:', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-
-        return response()->json([
-            'status' => false,
-            'message' => 'Gagal memperbarui stok: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
 }

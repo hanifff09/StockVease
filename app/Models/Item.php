@@ -29,3 +29,4 @@ class Item extends Model
         return $this->belongsTo(Kondisi::class, 'kondisi_id');
     }
 }
+    

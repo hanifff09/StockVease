@@ -25,6 +25,14 @@ const routes: Array<RouteRecordRaw> = [
         },
     },
     {
+        path: "/redirect",
+        name: "redirect",
+        component: () => import("@/redirect/redirect.vue"),
+        meta: {
+            pageTitle:"Redirect",
+        },
+    },
+    {
         path: "/form/:uuid",
         name: "form",
         component: () => import("@/form/form.vue"),
@@ -229,7 +237,7 @@ const routes: Array<RouteRecordRaw> = [
             {
                 // the 404 route, when none of the above matches
                 path: "/404",
-                    me: "404",
+                name: "404",
                 component: () => import("@/pages/errors/Error404.vue"),
                 meta: {
                     pageTitle: "Error 404",
@@ -256,11 +264,11 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import ("@/spvpage/landingspv.vue")
     },
     
-    {
-        path: "/staff/landing",
-        name: "staff.landing",
-        component: () => import ("@/staffpage/landing.vue")
-    },
+    // {
+    //     path: "/staff/landing",
+    //     name: "staff.landing",
+    //     component: () => import ("@/staffpage/landing.vue")
+    // },
 ];
 
 const router = createRouter({

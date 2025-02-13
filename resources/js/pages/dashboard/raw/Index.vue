@@ -115,6 +115,7 @@ async function handleConfirmation(uuid) {
         console.error(error);
     }
 }
+
  async function handleConfirm(uuid) {
     try {
         const result = await Swal.fire({
