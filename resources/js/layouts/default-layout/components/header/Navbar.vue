@@ -20,7 +20,7 @@ const themeMode = computed(() => {
 
 const tahun = useTahunStore()
 const tahuns = ref<Array<Number>>([])
-for (let i = new Date().getFullYear(); i >= new Date().getFullYear() - 2; i--) {
+for (let i = new Date().getFullYear(); i >= new Date().getFullYear() - 3; i--) {
     tahuns.value.push(i)
 }
 </script>

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use App\Models\VerificationSession;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PeminjamanController extends Controller
 {
@@ -26,7 +27,10 @@ class PeminjamanController extends Controller
                 ->orWhere('nip', 'like', "%$search%")
                 ->orWhere('item', 'like', "%$search%")
                 ->orWhere('alasan_pinjam', 'like', "%$search%");
-        })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
+        })
+            ->whereYear('tanggal_peminjaman', $request->tahun)
+            ->whereMonth('tanggal_peminjaman', $request->bulan)
+            ->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
 
         $data->map(function ($peminjaman) {
             if ($peminjaman->status == 0) {
@@ -101,42 +105,42 @@ class PeminjamanController extends Controller
     }
 
     public function addmin(Request $request)
-{
-    try {
-        // Validate the form data
-        $validated = $request->validate([
-            'nama' => 'required|string',
-            'nip' => 'required|string',
-            'email' => 'required|email',
-            'alasan_pinjam' => 'required|string',
-            'item' => 'required|string',
-            'tanggal_peminjaman' => 'required|date',
-            'tanggal_pengembalian' => 'required|date|after_or_equal:tanggal_peminjaman',
-        ]);
+    {
+        try {
+            // Validate the form data
+            $validated = $request->validate([
+                'nama' => 'required|string',
+                'nip' => 'required|string',
+                'email' => 'required|email',
+                'alasan_pinjam' => 'required|string',
+                'item' => 'required|string',
+                'tanggal_peminjaman' => 'required|date',
+                'tanggal_pengembalian' => 'required|date|after_or_equal:tanggal_peminjaman',
+            ]);
 
-        // Create peminjaman
-        $peminjaman = Peminjaman::create([
-            'uuid' => Str::uuid(),
-            ...$validated
-        ]);
+            // Create peminjaman
+            $peminjaman = Peminjaman::create([
+                'uuid' => Str::uuid(),
+                ...$validated
+            ]);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Data peminjaman berhasil disimpan.',
-            'data' => $peminjaman
-        ]);
-    } catch (\Exception $e) {
-        Log::error('Error creating peminjaman:', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
+            return response()->json([
+                'status' => true,
+                'message' => 'Data peminjaman berhasil disimpan.',
+                'data' => $peminjaman
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error creating peminjaman:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
-        return response()->json([
-            'status' => false,
-            'message' => 'Gagal menyimpan data peminjaman: ' . $e->getMessage()
-        ], 500);
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal menyimpan data peminjaman: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
 
 
     public function edit($uuid)
@@ -395,5 +399,62 @@ class PeminjamanController extends Controller
                 'item_uuid' => $session->item_uuid
             ]
         ]);
+    }
+
+    public function downloadPDF(Request $request)
+    {
+        try {
+            // Get data with filters
+            $peminjaman = Peminjaman::when($request->search, function (Builder $query, string $search) {
+                $query->where('nama', 'like', "%$search%")
+                    ->orWhere('nip', 'like', "%$search%")
+                    ->orWhere('item', 'like', "%$search%")
+                    ->orWhere('alasan_pinjam', 'like', "%$search%");
+            })
+                ->when($request->tahun, function ($query) use ($request) {
+                    $query->whereYear('tanggal_peminjaman', $request->tahun);
+                })
+                ->when($request->bulan, function ($query) use ($request) {
+                    $query->whereMonth('tanggal_peminjaman', $request->bulan);
+                })
+                ->latest()
+                ->get();    
+
+            // Map status text
+            $peminjaman->map(function ($item) {
+                if ($item->status == 0) {
+                    $item->text_status = 'Menunggu Dikonfirmasi';
+                } elseif ($item->status == 1) {
+                    $item->text_status = 'Pending';
+                } elseif ($item->status == 2) {
+                    $item->text_status = 'Dipinjam';
+                } elseif ($item->status == 3) {
+                    $item->text_status = 'Terlambat';
+                } elseif ($item->status == 4) {
+                    $item->text_status = 'Selesai';
+                } elseif ($item->status == 5) {
+                    $item->text_status = 'Ditolak';
+                }
+                return $item;
+            });
+
+            $pdf = PDF::loadView('pdf.peminjaman', [
+                'peminjaman' => $peminjaman,
+                'bulan' => $request->bulan ? date('F', mktime(0, 0, 0, $request->bulan, 1)) : 'Semua Bulan',
+                'tahun' => $request->tahun ?? date('Y')
+            ]);
+
+            return $pdf->download('rekap-peminjaman.pdf');
+        } catch (\Exception $e) {
+            Log::error('Error generating PDF:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal mengunduh PDF: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
