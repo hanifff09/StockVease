@@ -253,27 +253,31 @@ class PeminjamanController extends Controller
 
     // In PeminjamanController.php
 
-    public function getMonthlyStats()
-    {
-        $monthlyStats = Peminjaman::selectRaw('
-        DATE_FORMAT(created_at, "%Y-%m") as month,
+    public function getMonthlyStats(Request $request)
+{
+    // Base query
+    $query = Peminjaman::selectRaw('
+        DATE_FORMAT(tanggal_peminjaman, "%Y-%m") as month,
         COUNT(*) as total_loans
-    ')
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get()
-            ->map(function ($stat) {
-                return [
-                    'month' => date('M Y', strtotime($stat->month)),
-                    'total' => $stat->total_loans
-                ];
-            });
-
-        return response()->json([
-            'status' => true,
-            'data' => $monthlyStats
-        ]);
-    }
+    ')->whereYear('tanggal_peminjaman', $request->tahun);   
+    
+    // Group by month and get results
+    $monthlyStats = $query->groupBy('month')
+        ->orderBy('month')
+        ->get()
+        ->map(function ($stat) {
+            // Convert month format for display
+            return [
+                'month' => date('M Y', strtotime($stat->month)),
+                'total' => $stat->total_loans
+            ];
+        });
+    
+    return response()->json([
+        'status' => true,
+        'data' => $monthlyStats
+    ]);
+}
 
     public function sendOTP(Request $request)
     {
@@ -456,5 +460,33 @@ class PeminjamanController extends Controller
                 'message' => 'Gagal mengunduh PDF: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function getRawData()
+    {
+        // Return active loans (status 2)
+        $data = Peminjaman::where('status', 2)->count();
+        return response()->json($data);
+    }
+    
+    public function getLoanData()
+    {
+        // Return all loans
+        $data = Peminjaman::count();
+        return response()->json($data);
+    }
+    
+    public function getLateData()
+    {
+        // Return late loans (status 3)
+        $data = Peminjaman::where('status', 3)->count();
+        return response()->json($data);
+    }
+
+    public function dashboard()
+    {
+        $peminjaman = Peminjaman::count();
+
+        dd($peminjaman);
     }
 }

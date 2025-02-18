@@ -3,8 +3,10 @@ import { useRouter } from "vue-router";
 import VueApexCharts from "vue3-apexcharts";
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import { useTahunStore } from "@/stores/tahun";
 
 const router = useRouter()
+const { tahun } = useTahunStore()
 
 // State untuk menyimpan data
 const loanData = ref({
@@ -12,6 +14,12 @@ const loanData = ref({
   dueLoans: 0,
   totalLoans: 0
 });
+
+// Array of month names in Bahasa Indonesia
+const monthNames = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
 
 const chartOptions = ref({
   chart: {
@@ -32,7 +40,17 @@ const chartOptions = ref({
         colors: '#777777'
       },
       rotate: -45,
-      rotateAlways: false
+      rotateAlways: false,
+      formatter: function(value) {
+        // Handle long month names if needed
+        if (value && value.length > 10) {
+          const parts = value.split(' ');
+          if (parts.length > 1) {
+            return parts[0].substring(0, 3) + ' ' + parts[1];
+          }
+        }
+        return value;
+      }
     }
   },
   yaxis: {
@@ -77,40 +95,90 @@ const chartOptions = ref({
   }
 });
 
+// Helper function to format month names
+const formatMonthName = (monthStr) => {
+  // If it's already in the format "Month Year", return as is
+  if (/[A-Za-z]/.test(monthStr)) return monthStr;
+  
+  // If it's in "M/YYYY" format (e.g., "1/2023")
+  const [month, year] = monthStr.split('/');
+  
+  // Get the month name (subtract 1 because array is 0-indexed)
+  const monthName = monthNames[parseInt(month) - 1];
+  
+  // Return formatted string
+  return `${monthName} ${year}`;
+};
+
 // Function untuk mengambil data statistik
 const fetchStatistics = async () => {
   try {
+    axios.get('/peminjaman/databaru/raw').then(res => loanData.value.currentLoans = res.data),
+    axios.get('/peminjaman/databaru/loan').then(res => loanData.value.totalLoans = res.data),
+    axios.get('/peminjaman/databaru/late').then(res => loanData.value.dueLoans = res.data)
     // Mengambil data dari berbagai endpoint
-    const [rawData, loanData, lateData] = await Promise.all([
-      axios.post('/databaru/raw'),
-      axios.post('/databaru/loan'),
-      axios.post('/databaru/late')
-    ]);
+    // const [rawData, loanData, lateData] = await Promise.all([
+    // ]);
 
-    loanData.value = {
-      currentLoans: rawData.data.length || 0,
-      dueLoans: lateData.data.length || 0,
-      totalLoans: loanData.data.length || 0
-    };
+    // loanData.value = {
+    //   currentLoans: Array.isArray(rawData.data) ? rawData.data.length : 0,
+    //   dueLoans: Array.isArray(lateData.data) ? lateData.data.length : 0,
+    //   totalLoans: Array.isArray(loanData.data) ? loanData.data.length : 0
+    // };
   } catch (error) {
     console.error('Error fetching statistics:', error);
   }
-};
+};  
 
 // Function untuk mengambil data chart
 const fetchChartData = async () => {
   try {
-    const response = await axios.get('/peminjaman/monthly-stats');
+    const response = await axios.get(`/peminjaman/monthly-stats?tahun=${tahun}`);
     
     if (response.data.status) {
       const data = response.data.data;
       
+      // Format month names properly
+      const formattedData = data.map(item => {
+        // Format the month name if it's a numeric or standard representation
+        const monthDisplay = formatMonthName(item.month);
+        
+        return {
+          ...item,
+          displayMonth: monthDisplay
+        };
+      });
+      
+      // Sort the data chronologically if needed
+      formattedData.sort((a, b) => {
+        // Extract year and month for comparison
+        const parseMonthYear = (str) => {
+          for (let i = 0; i < monthNames.length; i++) {
+            if (str.includes(monthNames[i])) {
+              const year = str.split(' ')[1];
+              return { month: i + 1, year: parseInt(year) };
+            }
+          }
+          return null;
+        };
+        
+        const dateA = parseMonthYear(a.displayMonth);
+        const dateB = parseMonthYear(b.displayMonth);
+        
+        if (dateA && dateB) {
+          if (dateA.year !== dateB.year) return dateA.year - dateB.year;
+          return dateA.month - dateB.month;
+        }
+        
+        return 0;
+      });
+      
       chartOptions.value.series = [{
         name: 'Total Peminjaman',
-        data: data.map(item => item.total)
+        data: formattedData.map(item => item.total)
       }];
       
-      chartOptions.value.xaxis.categories = data.map(item => item.month);
+      chartOptions.value.xaxis.categories = formattedData.map(item => item.displayMonth);
     }
   } catch (error) {
     console.error('Error fetching chart data:', error);
@@ -131,11 +199,47 @@ const processLoanDataForChart = (data) => {
     return acc;
   }, {});
 
-  // Mengubah data menjadi format yang dibutuhkan chart
-  const labels = Object.keys(monthlyData);
-  const values = Object.values(monthlyData);
+  // Mengubah data menjadi format yang dibutuhkan chart dengan sorting
+  const sortedEntries = Object.entries(monthlyData)
+    .map(([key, value]) => {
+      const [month, year] = key.split('/');
+      return {
+        key,
+        value,
+        monthNum: parseInt(month),
+        year: parseInt(year),
+        displayMonth: `${monthNames[parseInt(month) - 1]} ${year}`
+      };
+    })
+    .sort((a, b) => {
+      // Sort by year first, then by month
+      if (a.year !== b.year) return a.year - b.year;
+      return a.monthNum - b.monthNum;
+    });
+
+  const labels = sortedEntries.map(entry => entry.displayMonth);
+  const values = sortedEntries.map(entry => entry.value);
 
   return { labels, values };
+};
+
+// Function to initialize chart with processed data
+const initializeChartWithProcessedData = async () => {
+  try {
+    const response = await axios.post('/databaru/loan');
+    if (response.data && Array.isArray(response.data)) {
+      const { labels, values } = processLoanDataForChart(response.data);
+      
+      chartOptions.value.series = [{
+        name: 'Total Peminjaman',
+        data: values
+      }];
+      
+      chartOptions.value.xaxis.categories = labels;
+    }
+  } catch (error) {
+    console.error('Error initializing chart with processed data:', error);
+  }
 };
 
 // Navigation functions
@@ -151,9 +255,19 @@ const bat = () => {
   router.push('/dashboard/late');
 }
 
+// const dataAwal = () => {
+//   axios.get('/databaru/tes')
+// }
+
 // Fetch data when component is mounted
 onMounted(() => {
+  fetchStatistics();
   fetchChartData();
+
+  
+  // dataAwal()
+  // If the API doesn't provide properly formatted data, use this instead:
+  // initializeChartWithProcessedData();
 });
 </script>
 

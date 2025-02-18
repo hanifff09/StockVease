@@ -43,6 +43,9 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         Route::post('', [SettingController::class, 'update']);
     });
 
+    // Route::prefix('dashboard')->group(function () {
+    // });
+    
     Route::prefix('master')->group(function () {
         Route::middleware('can:master-user')->group(function () {
             Route::get('users', [UserController::class, 'get']);
@@ -96,6 +99,9 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         Route::post('verify-otp', [PeminjamanController::class, 'verifyOTP'])->withoutMiddleware(['auth', 'verified', 'json']);
         Route::post('store', [PeminjamanController::class, 'add'])->withoutMiddleware(['auth', 'verified', 'json']);
         Route::get('download-pdf', [PeminjamanController::class, 'downloadPDF']);
+        Route::get('/databaru/raw', [PeminjamanController::class, 'getRawschData']);
+        Route::get('/databaru/loan', [PeminjamanController::class, 'getLoanData']);
+        Route::get('/databaru/late', [PeminjamanController::class, 'getLateData']);
         Route::apiResource('peminjaman', PeminjamanController::class)
             ->except(['index', 'add']);
     });
@@ -112,6 +118,8 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
             ->except(['index', 'store']);
     });
     Route::prefix('databaru')->group(function () {
+        Route::get('tes', [PeminjamanController::class, 'dashboard']);
+
         Route::post('raw', [DataBaruController::class, 'index']);
         Route::get('abc/{uuid}', [DataBaruController::class, 'update']);
         Route::post('confirm', [DataBaruController::class, 'index1']);
