@@ -19,18 +19,27 @@ class ItemController extends Controller
         ]);
     }
     public function index(Request $request)
-    {
-        $per = $request->per ?? 10;
-        $page = $request->page ? $request->page - 1 : 0;
+{
+    $per = $request->per ?? 10;
+    $page = $request->page ? $request->page - 1 : 0;
 
-        DB::statement('set @no=0+' . $page * $per);
-        $data = Item::with('category', 'kondisi')->when($request->search, function (Builder $query, string $search) {
-            $query->where('name', 'like', "%$search%")
-                ->orWhere('full_name', 'like', "%$search%");
-        })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
+    DB::statement('set @no=0+' . $page * $per);
+    $data = Item::with('category', 'kondisi')
+        ->when($request->search, function (Builder $query, string $search) {
+            $query->where('nama', 'like', "%$search%")
+                ->orWhereHas('category', function (Builder $query) use ($search) {
+                    $query->where('nama', 'like', "%$search%");
+                })
+                ->orWhereHas('kondisi', function (Builder $query) use ($search) {
+                    $query->where('kondisi', 'like', "%$search%");
+                });
+        })
+        ->latest()
+        ->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
 
-        return response()->json($data);
-    }
+    return response()->json($data);
+}
+
     
     public function destroy($uuid)
     {

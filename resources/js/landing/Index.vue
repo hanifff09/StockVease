@@ -13,6 +13,7 @@ const router = useRouter();
 const categories = ref([]);
 const items = ref([]);
 const selectedCategoryId = ref(null);
+const searchQuery = ref('');
 
 const getCategory = async () => {
   try {
@@ -26,18 +27,29 @@ const getCategory = async () => {
 const getItem = async () => {
   try {
     const response = await axios.get("/item/get");
-    items.value = response.data.data;
+    // Filter out items with zero stock before assigning to items.value
+    items.value = response.data.data.filter(item => item.stok > 0);
   } catch (error) {
     console.error("Error fetching concerts:", error);
   }
 };
 
-// Computed property to filter items based on selected category
+// Updated computed property to filter items based on both category and search query
 const filteredItems = computed(() => {
-  if (!selectedCategoryId.value) {
-    return items.value;
+  let result = items.value;
+  
+  // Filter by category if selected
+  if (selectedCategoryId.value) {
+    result = result.filter(item => item.category_id === selectedCategoryId.value);
   }
-  return items.value.filter(item => item.category_id === selectedCategoryId.value);
+  
+  // Filter by search query if not empty
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim();
+    result = result.filter(item => item.nama.toLowerCase().includes(query));
+  }
+  
+  return result;
 });
 
 // Function to handle category selection
@@ -47,6 +59,11 @@ const selectCategory = (categoryId) => {
   } else {
     selectedCategoryId.value = categoryId;
   }
+};
+
+// Function to clear search
+const clearSearch = () => {
+  searchQuery.value = '';
 };
 
 onMounted(() => {
@@ -77,10 +94,33 @@ onMounted(() => {
           <h5 class="card-title text-center text-white">{{ category.nama }}</h5>
         </div>
       </div>
-  </div>
+    </div>
   </div>
 
+  <!-- Search field section -->
   <div class="row mt-10 justify-content-center">
+    <div class="col-md-6 mb-4">
+      <div class="input-group">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Cari item..."
+          v-model="searchQuery"
+          aria-label="Search items"
+        >
+        <button 
+          class="btn btn-outline-secondary" 
+          type="button" 
+          @click="clearSearch"
+          v-if="searchQuery"
+        >
+          <i class="bi bi-x"></i> Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4 justify-content-center">
     <div class="text-center mb-10">
       <h1>ITEM</h1>
     </div>
@@ -120,5 +160,26 @@ onMounted(() => {
 
 .concert-card:hover {
   transform: scale(1.02);
+}
+
+/* Add some styling for the search field */
+.input-group {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.input-group .form-control:focus {
+  box-shadow: none;
+  border-color: #ff9913;
+}
+
+.btn-outline-secondary {
+  border-color: #ced4da;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #f8f9fa;
+  color: #212529;
 }
 </style>

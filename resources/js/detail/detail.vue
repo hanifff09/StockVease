@@ -2,13 +2,14 @@
 import KTHeader from "@/layouts/default-layout/components/header/NavbarLanding.vue";
 import KTFooter from "@/layouts/default-layout/components/header/Footer.vue";
 import axios from "@/libs/axios";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import "@splidejs/splide/dist/css/splide.min.css";
 import { useRoute, useRouter } from "vue-router";
 
 const items = ref({});
 const route = useRoute();
 const router = useRouter();
+const isButtonHidden = ref(false);
 
 const getItem = async () => {
     try {
@@ -20,18 +21,31 @@ const getItem = async () => {
 };
 
 const handlePinjamClick = () => {
-    // Store item details in localStorage
+    // Simpan data item ke Local Storage
     localStorage.setItem('selectedItem', JSON.stringify({
         uuid: items.value.uuid,
         nama: items.value.nama
     }));
 
-    // Navigate to verification page with item UUID
+    // Simpan status tombol tersembunyi
+    localStorage.setItem('buttonHidden', 'true');
+    isButtonHidden.value = true;
+
+    // Navigasi ke halaman verifikasi
     router.push(`/verif/${items.value.uuid}`);
 };
 
+// Computed property to check if button should be shown
+const showButton = computed(() => {
+    return !isButtonHidden.value && items.value && items.value.stok > 0;
+});
+
 onMounted(() => {
     getItem();
+
+    if (localStorage.getItem('buttonHidden') === 'true') {
+        isButtonHidden.value = true;
+    }
 });
 </script>
 
@@ -52,11 +66,17 @@ onMounted(() => {
                 <h1 class="mb-5">{{ items.nama }}</h1>
                 <p class="mb-5">{{ items.deskripsi }}</p>
                 <span>{{ items.kondisi }}</span>
+                <div v-if="items.stok !== undefined" class="mt-3">
+                    <span :class="items.stok > 0 ? 'text-success' : 'text-danger'">
+                        {{ items.stok > 0 ? `Tersedia: ${items.stok}` : 'Stok Habis' }}
+                    </span>
+                </div>
             </div>
-            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <button @click="handlePinjamClick" class="btn btn-primary">
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                <button v-if="showButton" @click="handlePinjamClick" class="btn btn-primary">
                     Pinjam
                 </button>
+                <span v-else-if="items.stok <= 0" class="text-danger">Maaf, stok barang habis</span>
             </div>
         </div>
     </div>

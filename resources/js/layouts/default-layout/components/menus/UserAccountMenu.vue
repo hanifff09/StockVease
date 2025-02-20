@@ -126,11 +126,11 @@ const currentLangugeLocale = computed(() => {
         <!--end::Menu separator-->
 
         <!--begin::Menu item-->
-        <div class="menu-item px-5 my-1">
+        <!-- <div class="menu-item px-5 my-1">
             <router-link to="/dashboard/profile" class="menu-link px-5">
                 Account Settings
             </router-link>
-        </div>
+        </div> -->
         <!--end::Menu item-->
 
         <!--begin::Menu item-->

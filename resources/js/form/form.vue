@@ -12,6 +12,7 @@ import config from "@/layouts/default-layout/config/DefaultLayoutConfig";
 const router = useRouter();
 const route = useRoute();
 const item = ref({});
+const uuid = route.params.uuid;
 
 const schema = yup.object({
     nama: yup.string().required('Nama wajib diisi'),
@@ -34,7 +35,11 @@ const initialValues = ref({
     item: '',
     tanggal_peminjaman: '',
     tanggal_pengembalian: ''
-});
+}); 
+
+const goToDetail = (uuid) => {
+    router.push({ name: 'detail', params: { uuid } });
+};
 
 const getItem = async () => {
     try {
@@ -89,6 +94,8 @@ const submitForm = async () => {
         if (response.data.status) {
             // Update stock after successful loan creation
             await updateItemStock();
+
+            localStorage.removeItem('buttonHidden');
             
             toast.success('Peminjaman berhasil dan stok telah diperbarui');
             localStorage.removeItem('verificationData');
@@ -201,7 +208,7 @@ const isReturnDateDisabled = computed(() => {
                         <label class="form-label fw-bold fs-6 required">
                             Item
                         </label>
-                        <Field class="form-control form-control-lg form-control-solid mt-3" type="text" name="nama" autocomplete="off" placeholder="Nama Item" v-model="initialValues.item"  as="textarea" />
+                        <Field class="form-control form-control-lg form-control-solid mt-3" type="text" name="nama" autocomplete="off" placeholder="Nama Item" v-model="initialValues.item"  as="textarea" readonly @click="goToDetail(item.uuid)" style="cursor: pointer;"/>
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="nama" />
@@ -244,7 +251,7 @@ const isReturnDateDisabled = computed(() => {
                 
             </div>
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
-                    <button @click="submitForm" type="submit" class="btn btn-primary h-75">Kirim</button>
+                    <button v-if="item.stok > 0" @click="submitForm" type="submit" class="btn btn-primary h-75">Kirim</button>
                 </div>
         </VForm>
     </div>

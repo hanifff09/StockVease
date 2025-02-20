@@ -4,9 +4,12 @@ import VueApexCharts from "vue3-apexcharts";
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useTahunStore } from "@/stores/tahun";
+import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter()
 const { tahun } = useTahunStore()
+
+const { user } = useAuthStore()
 
 // State untuk menyimpan data
 const loanData = ref({
@@ -284,7 +287,7 @@ onMounted(() => {
 
 
         <!-- Cards Section -->
-        <div class="row g-3 g-lg-6">
+        <div class="row g-3 g-lg-6 justify-content-center">
           <div class="col-xl-4 col-sm-6">
             <div class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-success border-left-5 border-start d-block"
               @click="but">
@@ -334,7 +337,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <div class="col-xl-4 col-sm-6">
+          <div v-if="user.id === 1" class="col-xl-4 col-sm-6">
             <div class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-info border-left-5 border-start d-block"
               @click="butt">
               <div class="symbol symbol-30px me-5 mb-8">

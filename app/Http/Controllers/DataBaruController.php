@@ -274,7 +274,9 @@ class DataBaruController extends Controller
                 ->orWhere('nip', 'like', "%$search%")
                 ->orWhere('item', 'like', "%$search%")
                 ->orWhere('alasan_pinjam', 'like', "%$search%");
-        })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
+        })
+        ->whereYear('created_at', $request->tahun)
+        ->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
 
         $data->map(function ($peminjaman) {
             if ($peminjaman->status == 4) {
